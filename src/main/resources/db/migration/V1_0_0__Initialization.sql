@@ -1,0 +1,5 @@
+CREATE TABLE testFirst(
+    ID SERIAL PRIMARY KEY NOT NULL,
+    email       VARCHAR(255)
+);
+
