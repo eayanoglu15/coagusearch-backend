@@ -51,11 +51,12 @@ data class UserBodyInfo(
         @field:Column(name = "rh_type")
         var rhType: UserRhType? = null,
 
+        @field:Enumerated(EnumType.STRING)
         var gender: UserGender? = null,
 
         override var id: KeyType? = null,
         override var version: LocalDateTime? = null
-) : DateAudit() {
+) : DbEntity() {
     override fun equalityProperties(): Collection<KProperty1<out DbEntity, Any?>> =
             listOf(UserBodyInfo::id)
 }

@@ -2,9 +2,11 @@ package com.example.coagusearch.modules.auth
 
 import com.example.coagusearch.modules.auth.request.LoginRequest
 import com.example.coagusearch.modules.auth.request.RefreshRequest
+import com.example.coagusearch.modules.auth.request.UserSaveRequest
 import com.example.coagusearch.modules.auth.response.AuthResponse
 import com.example.coagusearch.modules.auth.response.JwtAuthenticationResponse
 import com.example.coagusearch.modules.auth.response.JwtRefreshResponse
+import com.example.coagusearch.modules.auth.response.UserSaveResponse
 import com.example.coagusearch.modules.auth.service.AuthService
 import com.example.coagusearch.modules.base.BaseController
 import com.example.coagusearch.modules.users.service.UserService
@@ -12,6 +14,7 @@ import com.example.coagusearch.security.CurrentUser
 import com.example.coagusearch.security.JwtTokenProvider
 import com.example.coagusearch.security.UserPrincipal
 import com.example.coagusearch.shared.RestException
+import com.example.coagusearch.shared.asOkResponse
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -44,7 +47,6 @@ class AuthController @Autowired constructor(
         val authenticationManager: AuthenticationManager,
         val authService: AuthService,
         val userService: UserService,
-        val passwordEncoder: BCryptPasswordEncoder,
         val tokenProvider: JwtTokenProvider,
         val messageSource: MessageSource
 ) : BaseController() {
@@ -81,13 +83,38 @@ class AuthController @Autowired constructor(
         return ResponseEntity.ok(jwt)
     }
 
+    @PostMapping("/tempSignIn")
+    fun saveAUser(
+            @Valid @RequestBody userSaveRequest: UserSaveRequest,
+            locale: Locale
+    ): ResponseEntity<UserSaveResponse> {
+        return authService.signInUserTemp(userSaveRequest).asOkResponse()
+    }
+
+    @PostMapping("/savePatient")
+    fun savePatient(
+            @Valid @RequestBody userSaveRequest: UserSaveRequest,
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<UserSaveResponse> {
+        val user = userPrincipal.user
+        return authService.signInPatient(user,userSaveRequest).asOkResponse()
+    }
+
+
+
+
+
+
+/*
+
     /**
      * Endpoints for registering a new user
      * @param signUpRequest Request containing immediate user details in the beginning of the registration
      * @param locale Locale from http headers
      * @return Response entity containing the registration success status
      */
-    /*
+
     @PostMapping("/sign-up")
     @ApiOperation(value = "Signs up an user", response = AuthResponse::class)
     @ApiImplicitParams(
@@ -127,7 +154,7 @@ class AuthController @Autowired constructor(
         }
 
         // Encode password
-        val password = passwordEncoder.encode(signUpRequest.password)
+
 
         val user = User(
                 firstName = signUpRequest.firstName,
@@ -172,48 +199,50 @@ class AuthController @Autowired constructor(
                 AuthResponse.fromMessage(messageSource, locale, true, "Auth.registered")
         )
     }
+
+ */
+    /*
+/**
+ * Endpoint for refreshing an auth token using the access token
+ * @param refreshRequest Request object containing refresh token
+ * @return Response containing new auth token
+ */
+@PostMapping("/refresh")
+@ApiOperation(value = "Refreshes the user access token")
+fun refreshToken(
+        @Valid @RequestBody refreshRequest: RefreshRequest,
+        httpServletRequest: HttpServletRequest
+): ResponseEntity<JwtRefreshResponse> {
+    if (!tokenProvider.validateToken(refreshRequest.refreshToken)) {
+        throw RestException("RefreshToken.invalid", HttpStatus.UNAUTHORIZED).apply {
+            hiddenMessage = "Given token is not valid"
+        }
+    }
+    val userId = tokenProvider.getUserIdFromJWT(refreshRequest.refreshToken)
+    val user = authService.getUserById(userId)
+    val isTokenValid = authService.validateRefreshToken(user, refreshRequest.refreshToken)
+    if (!isTokenValid) {
+        throw RestException("RefreshToken.invalid", HttpStatus.UNAUTHORIZED).apply {
+            hiddenMessage =
+                    "Given token is not valid for the user, user: $userId, token: ${refreshRequest.refreshToken}"
+        }
+    }
+    val jwt = tokenProvider.regenerateToken(userId)
+    return ResponseEntity.ok(jwt)
+}
+
+/**
+ * Endpoint for logging out a user by revoking their refresh token
+ * @param user Current authenticated user
+ * @param locale Current user locale
+ * @return Whether or not successfully revoked the auth token
+ */
+@DeleteMapping("/revoke")
+@ApiOperation(value = "Revoke refresh token for the user")
+fun revokeToken(@CurrentUser user: UserPrincipal, locale: Locale): ResponseEntity<AuthResponse> {
+    val userDao = user.user
+    authService.revokeRefreshToken(userDao)
+    return ResponseEntity.ok(AuthResponse.fromMessage(messageSource, locale, true, "Auth.revoked"))
+}
 */
-    /**
-     * Endpoint for refreshing an auth token using the access token
-     * @param refreshRequest Request object containing refresh token
-     * @return Response containing new auth token
-     */
-    @PostMapping("/refresh")
-    @ApiOperation(value = "Refreshes the user access token")
-    fun refreshToken(
-            @Valid @RequestBody refreshRequest: RefreshRequest,
-            httpServletRequest: HttpServletRequest
-    ): ResponseEntity<JwtRefreshResponse> {
-        if (!tokenProvider.validateToken(refreshRequest.refreshToken)) {
-            throw RestException("RefreshToken.invalid", HttpStatus.UNAUTHORIZED).apply {
-                hiddenMessage = "Given token is not valid"
-            }
-        }
-        val userId = tokenProvider.getUserIdFromJWT(refreshRequest.refreshToken)
-        val user = authService.getUserById(userId)
-        val isTokenValid = authService.validateRefreshToken(user, refreshRequest.refreshToken)
-        if (!isTokenValid) {
-            throw RestException("RefreshToken.invalid", HttpStatus.UNAUTHORIZED).apply {
-                hiddenMessage =
-                        "Given token is not valid for the user, user: $userId, token: ${refreshRequest.refreshToken}"
-            }
-        }
-        val jwt = tokenProvider.regenerateToken(userId)
-        return ResponseEntity.ok(jwt)
-    }
-
-    /**
-     * Endpoint for logging out a user by revoking their refresh token
-     * @param user Current authenticated user
-     * @param locale Current user locale
-     * @return Whether or not successfully revoked the auth token
-     */
-    @DeleteMapping("/revoke")
-    @ApiOperation(value = "Revoke refresh token for the user")
-    fun revokeToken(@CurrentUser user: UserPrincipal, locale: Locale): ResponseEntity<AuthResponse> {
-        val userDao = user.user
-        authService.revokeRefreshToken(userDao)
-        return ResponseEntity.ok(AuthResponse.fromMessage(messageSource, locale, true, "Auth.revoked"))
-    }
-
 }

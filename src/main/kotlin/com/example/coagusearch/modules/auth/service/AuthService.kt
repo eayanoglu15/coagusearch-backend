@@ -5,10 +5,25 @@ import com.example.coagusearch.modules.auth.model.RefreshTokenRepository
 import com.example.coagusearch.shared.RestException
 import com.example.coagusearch.modules.users.model.User
 import com.example.coagusearch.modules.users.model.UserRepository
+import com.example.coagusearch.modules.auth.request.UserSaveRequest
+import com.example.coagusearch.modules.auth.response.UserSaveResponse
+import com.example.coagusearch.modules.users.model.UserBloodType
+import com.example.coagusearch.modules.users.model.UserBodyInfo
+import com.example.coagusearch.modules.users.model.UserCaseType
+import com.example.coagusearch.modules.users.model.UserDoctorMedicalRelationship
+import com.example.coagusearch.modules.users.model.UserDoctorMedicalRelationshipRepository
+import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationship
+import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationshipRepository
+import com.example.coagusearch.modules.users.model.UserGender
+import com.example.coagusearch.modules.users.model.UserRhType
+import com.example.coagusearch.modules.users.service.UserService
+import net.bytebuddy.implementation.bytecode.Throw
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.random.Random
 
 /**
  * Authentication related service, manages user and refresh token repositories
@@ -16,8 +31,110 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AuthService @Autowired constructor(
         private val userRepository: UserRepository,
-        private val refreshTokenRepository: RefreshTokenRepository
+        private val refreshTokenRepository: RefreshTokenRepository,
+        private val passwordEncoder: BCryptPasswordEncoder,
+        private val userService: UserService,
+        private val userDoctorMedicalRelationshipRepository: UserDoctorMedicalRelationshipRepository,
+        private val userDoctorPatientRelationshipRepository: UserDoctorPatientRelationshipRepository
+
 ) {
+    fun signInPatient(saverUser: User, userSaveRequest: UserSaveRequest): UserSaveResponse {
+        if (saverUser.type != UserCaseType.Medical)
+            throw RestException(
+                    "Exception.notFound",
+                    HttpStatus.UNAUTHORIZED,
+                    "User",
+                    saverUser.id!!
+            )
+        val passwordValue = Random.nextInt(100000, 999999)
+        val password = passwordEncoder.encode(passwordValue.toString())
+        val newUser = User(
+                identityNumber = userSaveRequest.identity_number,
+                password = password,
+                type = UserCaseType.valueOf(userSaveRequest.type)
+        )
+        userRepository.save(
+                newUser
+        )
+
+        userService.saveBodyInfo(
+                UserBodyInfo(
+                        user = newUser,
+                        name = userSaveRequest.name!!,
+                        surname = userSaveRequest.surname!!,
+                        dateOfBirth = null,
+                        height = userSaveRequest.height,
+                        weight = userSaveRequest.weight,
+                        bloodType = if(userSaveRequest.bloodType != null)
+                            UserBloodType.valueOf(userSaveRequest.bloodType!!) else null,
+                        rhType = if(userSaveRequest.rhType != null)
+                            UserRhType.valueOf(userSaveRequest.rhType!!) else null,
+                        gender = if(userSaveRequest.gender != null)
+                            UserGender.valueOf(userSaveRequest.gender!!) else null
+
+                )
+        )
+        var doctor: UserDoctorMedicalRelationship? =
+                userDoctorMedicalRelationshipRepository.findByMedical(saverUser) ?: throw RestException(
+                        "Exception.notFound",
+                        HttpStatus.UNAUTHORIZED,
+                        "User",
+                        saverUser.id!!
+                )
+        userDoctorPatientRelationshipRepository.save(
+                UserDoctorPatientRelationship(
+                        doctor = doctor!!.doctor,
+                        patient = newUser
+                )
+        )
+
+        return UserSaveResponse(protocolCode = passwordValue.toString())
+    }
+
+    fun signInUserTemp(userSaveRequest: UserSaveRequest): UserSaveResponse {
+        val passwordValue = Random.nextInt(100000, 999999)
+        val password = passwordEncoder.encode(passwordValue.toString())
+        val newUser = User(
+                identityNumber = userSaveRequest.identity_number,
+                password = password,
+                type = UserCaseType.valueOf(userSaveRequest.type)
+        )
+        userRepository.save(
+                newUser
+        )
+
+        userService.saveBodyInfo(
+                UserBodyInfo(
+                        user = newUser,
+                        name = userSaveRequest.name!!,
+                        surname = userSaveRequest.surname!!,
+                        dateOfBirth = null,
+                        height = userSaveRequest.height,
+                        weight = userSaveRequest.weight,
+                        bloodType = if(userSaveRequest.bloodType != null)
+                        UserBloodType.valueOf(userSaveRequest.bloodType!!) else null,
+                        rhType = if(userSaveRequest.rhType != null)
+                            UserRhType.valueOf(userSaveRequest.rhType!!) else null,
+                        gender = if(userSaveRequest.gender != null)
+                            UserGender.valueOf(userSaveRequest.gender!!) else null
+
+                )
+        )
+        if(newUser.type == UserCaseType.Medical){
+            if(userSaveRequest.doctor_identity_number != null){
+                var doctor = getUserByIdentityNumber(userSaveRequest.doctor_identity_number!!)
+                userDoctorMedicalRelationshipRepository.save(
+                        UserDoctorMedicalRelationship(
+                                doctor = doctor,
+                                medical = newUser
+                        )
+                )
+            }
+        }
+
+        return UserSaveResponse(protocolCode = passwordValue.toString())
+    }
+
 
     /**
      * Gets user by given id, throws notFound exception if user is not found
@@ -25,18 +142,19 @@ class AuthService @Autowired constructor(
      * @return User with given userId
      * @throws RestException if there is no such user
      */
-    fun getUserById(userId: Long): User {
+    fun getUserByIdentityNumber(identity_number: String): User {
         // Get the user for the id
-        val userEntity = userRepository.findById(userId)
+        val userEntity = userRepository.findByIdentityNumber(identity_number)
         return userEntity.orElseThrow {
             RestException(
-                "Exception.notFound",
-                HttpStatus.UNAUTHORIZED,
-                "User",
-                userId
+                    "Exception.notFound",
+                    HttpStatus.UNAUTHORIZED,
+                    "User",
+                    identity_number
             )
         }
     }
+
     /**
      * Creates a user and returns the created entity
      * @param user User object to create in the database
@@ -66,7 +184,7 @@ class AuthService @Autowired constructor(
      */
     @Transactional
     fun changePassword(user: User, newPasswordEncoded: String): User =
-        updateUser(user.copy(password = newPasswordEncoded))
+            updateUser(user.copy(password = newPasswordEncoded))
 
     /**
      * Save a refresh token for a given user, also invalidated per login
@@ -81,13 +199,13 @@ class AuthService @Autowired constructor(
         val tokenEntity = refreshTokenRepository.findByUser(user)
         val entity = tokenEntity.orElseGet {
             RefreshToken(
-                user,
-                refreshToken = null
+                    user,
+                    refreshToken = null
             )
         }.copy(refreshToken = refreshToken)
         val token = refreshTokenRepository.save(entity)
 
-       // userTokenService.removePerLoginSessionTokensForUser(user)
+        // userTokenService.removePerLoginSessionTokensForUser(user)
 
         return token
     }
@@ -103,8 +221,8 @@ class AuthService @Autowired constructor(
         val tokenEntity = refreshTokenRepository.findByUser(user)
         val token = tokenEntity.orElseThrow {
             RestException(
-                "RefreshToken.invalid",
-                HttpStatus.UNAUTHORIZED
+                    "RefreshToken.invalid",
+                    HttpStatus.UNAUTHORIZED
             ).apply {
                 hiddenMessage = "Cannot find refresh token for user with ${user.identityNumber}"
             }

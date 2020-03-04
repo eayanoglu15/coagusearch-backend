@@ -1,6 +1,5 @@
 package com.example.coagusearch.modules.users.model
 
-import com.example.coagusearch.modules.users.model.User
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.Optional
 

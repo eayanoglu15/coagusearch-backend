@@ -1,7 +1,9 @@
 package com.example.coagusearch.modules.users
 
 import com.example.coagusearch.modules.base.BaseController
+import com.example.coagusearch.shared.ApiResponse
 import com.example.coagusearch.modules.users.response.UserResponse
+import com.example.coagusearch.modules.users.request.UserBodyInfoSaveRequest
 import com.example.coagusearch.modules.users.service.UserService
 import com.example.coagusearch.security.CurrentUser
 import com.example.coagusearch.security.UserPrincipal
@@ -12,9 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.util.*
+import javax.validation.Valid
 
 /**
  * Endpoint for user data that is not related to authentication
@@ -41,4 +46,28 @@ class UserController @Autowired constructor(
         val user = userPrincipal.user
         return userService.getMyUserResponse(user).asOkResponse()
     }
+
+    @GetMapping("/getMyPatients")
+    fun getMyPatients(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<List<UserResponse>> {
+        val user = userPrincipal.user
+        return userService.getMyPatients(user).asOkResponse()
+    }
+
+
+
+    @PostMapping("/saveBodyInfo")
+    fun saveAUser(
+            @Valid @RequestBody userBodyInfoSaveRequest: UserBodyInfoSaveRequest,
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<ApiResponse> {
+         userService.saveBodyInfoByUser(userPrincipal.user,userBodyInfoSaveRequest).asOkResponse()
+        return ApiResponse.fromMessage(messageSource, locale,
+                true, "General.successfulSave").asOkResponse()
+    }
+
+
 }

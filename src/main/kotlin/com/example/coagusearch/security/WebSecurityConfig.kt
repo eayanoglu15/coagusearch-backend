@@ -41,6 +41,7 @@ class WebSecurityConfig @Autowired constructor(
                         HttpMethod.POST,
                         "/auth/sign-in",
                         "/auth/sign-up",
+                        "/auth/tempSignIn",
                         "/auth/refresh"
                 ).permitAll()
                 .antMatchers("/swagger-ui.html/**").permitAll()

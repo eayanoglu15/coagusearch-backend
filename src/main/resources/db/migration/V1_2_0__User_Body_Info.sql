@@ -12,3 +12,6 @@ CREATE TABLE public.user_body_info
     rh_type       character varying(255),
     gender        character varying(255)
 );
+ALTER TABLE ONLY public.user_body_info
+    add constraint foreign_key_user_body_info_users foreign key (user_id)
+        references public.users (id);

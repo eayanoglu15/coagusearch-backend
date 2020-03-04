@@ -37,8 +37,8 @@ data class User(
         var password: String,
 
         @field:Enumerated(EnumType.STRING)
-        @field:NotBlank
         var type: UserCaseType,
+
         override var id: KeyType? = null,
         override var version: LocalDateTime? = null
 ) : DbEntity() {
