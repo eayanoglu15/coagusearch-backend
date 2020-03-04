@@ -8,6 +8,8 @@ import java.time.Instant
 import java.time.LocalDateTime
 import javax.persistence.Column
 import javax.persistence.Entity
+import javax.persistence.EnumType
+import javax.persistence.Enumerated
 import javax.persistence.FetchType
 import javax.persistence.JoinColumn
 import javax.persistence.OneToOne
@@ -41,9 +43,11 @@ data class UserBodyInfo(
         var height: Double? = null,
         var weight: Double? = null,
 
+        @field:Enumerated(EnumType.STRING)
         @field:Column(name = "blood_type")
         var bloodType: UserBloodType? = null,
 
+        @field:Enumerated(EnumType.STRING)
         @field:Column(name = "rh_type")
         var rhType: UserRhType? = null,
 

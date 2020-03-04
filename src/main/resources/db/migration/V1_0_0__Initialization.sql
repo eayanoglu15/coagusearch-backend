@@ -1,5 +1,13 @@
-CREATE TABLE testFirst(
-    ID SERIAL PRIMARY KEY NOT NULL,
-    email       VARCHAR(255)
+CREATE TABLE testFirst
+(
+    ID    SERIAL PRIMARY KEY NOT NULL,
+    email VARCHAR(255)
 );
 
+
+CREATE SEQUENCE public.hibernate_sequence
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;

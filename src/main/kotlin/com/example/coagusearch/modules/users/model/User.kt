@@ -10,6 +10,8 @@ import java.util.EnumSet
 import javax.persistence.Column
 import javax.persistence.Convert
 import javax.persistence.Entity
+import javax.persistence.EnumType
+import javax.persistence.Enumerated
 import javax.persistence.FetchType
 import javax.persistence.OneToMany
 import javax.persistence.Table
@@ -34,11 +36,12 @@ data class User(
         @field:NotBlank
         var password: String,
 
+        @field:Enumerated(EnumType.STRING)
         @field:NotBlank
         var type: UserCaseType,
         override var id: KeyType? = null,
         override var version: LocalDateTime? = null
-) : DateAudit() {
+) : DbEntity() {
     override fun equalityProperties(): Collection<KProperty1<out DbEntity, Any?>> =
         listOf(User::identityNumber)
 
