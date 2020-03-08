@@ -43,6 +43,9 @@ dependencies {
     compile ("joda-time:joda-time:2.10.5")
     implementation("org.apache.commons:commons-lang3:3.9")
 
+
+    // Firebase Admin
+    implementation ("com.google.firebase:firebase-admin:6.8.1")
     // JWT
     implementation ("io.jsonwebtoken:jjwt-api:0.10.7")
     runtime ("io.jsonwebtoken:jjwt-impl:0.10.7")
