@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
+import com.example.coagusearch.shared.getOrThrow
+
 import org.springframework.transaction.annotation.Transactional
 import kotlin.random.Random
 
@@ -145,14 +147,14 @@ class AuthService @Autowired constructor(
     fun getUserByIdentityNumber(identity_number: String): User {
         // Get the user for the id
         val userEntity = userRepository.findByIdentityNumber(identity_number)
-        return userEntity.orElseThrow {
-            RestException(
+        if(userEntity == null)
+       throw RestException(
                     "Exception.notFound",
                     HttpStatus.UNAUTHORIZED,
                     "User",
                     identity_number
             )
-        }
+        else return userEntity
     }
 
     /**

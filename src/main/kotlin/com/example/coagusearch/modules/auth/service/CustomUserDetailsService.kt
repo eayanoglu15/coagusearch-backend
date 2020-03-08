@@ -19,7 +19,7 @@ class CustomUserDetailsService @Autowired constructor(
     override fun loadUserByUsername(email: String?): UserDetails {
         email.requireNotNull { UsernameNotFoundException("null") }
         val user = userRepository.findByIdentityNumber(email)
-            .orElseThrow { UsernameNotFoundException("$email") }
+           if(user == null) throw UsernameNotFoundException("$email")
         return UserPrincipal.create(user)
     }
 
