@@ -11,6 +11,7 @@ object SecurityConstants {
     val SECRET: SecretKey
         get() = Keys.hmacShaKeyFor(SECRET_KEY.toByteArray())
 
+    // TODO : Make it 600000 again
     const val EXPIRATION_TIME: Long = 600000 // 10 minutes
 
     const val TOKEN_PREFIX = "Bearer "

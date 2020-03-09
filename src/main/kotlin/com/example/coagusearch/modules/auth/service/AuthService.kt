@@ -248,6 +248,18 @@ class AuthService @Autowired constructor(
         refreshTokenRepository.save(token)
     }
 
+    fun getUserById(userId: Long): User {
+       return  userRepository.findById(userId)
+               .orElseThrow {
+           RestException(
+                   "Exception.notFound",
+                   HttpStatus.UNAUTHORIZED,
+                   "User",
+                   userId
+           )
+        }
+    }
+
 
 }
 

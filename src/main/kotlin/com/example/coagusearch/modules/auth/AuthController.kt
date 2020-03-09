@@ -101,7 +101,29 @@ class AuthController @Autowired constructor(
         return authService.signInPatient(user,userSaveRequest).asOkResponse()
     }
 
-
+    @PostMapping("/refresh")
+    @ApiOperation(value = "Refreshes the user access token")
+    fun refreshToken(
+            @Valid @RequestBody refreshRequest: RefreshRequest,
+            httpServletRequest: HttpServletRequest
+    ): ResponseEntity<JwtRefreshResponse> {
+        if (!tokenProvider.validateToken(refreshRequest.refreshToken)) {
+            throw RestException("RefreshToken.invalid", HttpStatus.UNAUTHORIZED).apply {
+                hiddenMessage = "Given token is not valid"
+            }
+        }
+        val userId = tokenProvider.getUserIdFromJWT(refreshRequest.refreshToken)
+        val user = authService.getUserById(userId)
+        val isTokenValid = authService.validateRefreshToken(user, refreshRequest.refreshToken)
+        if (!isTokenValid) {
+            throw RestException("RefreshToken.invalid", HttpStatus.UNAUTHORIZED).apply {
+                hiddenMessage =
+                        "Given token is not valid for the user, user: $userId, token: ${refreshRequest.refreshToken}"
+            }
+        }
+        val jwt = tokenProvider.regenerateToken(userId)
+        return ResponseEntity.ok(jwt)
+    }
 
 
 
@@ -207,29 +229,7 @@ class AuthController @Autowired constructor(
  * @param refreshRequest Request object containing refresh token
  * @return Response containing new auth token
  */
-@PostMapping("/refresh")
-@ApiOperation(value = "Refreshes the user access token")
-fun refreshToken(
-        @Valid @RequestBody refreshRequest: RefreshRequest,
-        httpServletRequest: HttpServletRequest
-): ResponseEntity<JwtRefreshResponse> {
-    if (!tokenProvider.validateToken(refreshRequest.refreshToken)) {
-        throw RestException("RefreshToken.invalid", HttpStatus.UNAUTHORIZED).apply {
-            hiddenMessage = "Given token is not valid"
-        }
-    }
-    val userId = tokenProvider.getUserIdFromJWT(refreshRequest.refreshToken)
-    val user = authService.getUserById(userId)
-    val isTokenValid = authService.validateRefreshToken(user, refreshRequest.refreshToken)
-    if (!isTokenValid) {
-        throw RestException("RefreshToken.invalid", HttpStatus.UNAUTHORIZED).apply {
-            hiddenMessage =
-                    "Given token is not valid for the user, user: $userId, token: ${refreshRequest.refreshToken}"
-        }
-    }
-    val jwt = tokenProvider.regenerateToken(userId)
-    return ResponseEntity.ok(jwt)
-}
+
 
 /**
  * Endpoint for logging out a user by revoking their refresh token
