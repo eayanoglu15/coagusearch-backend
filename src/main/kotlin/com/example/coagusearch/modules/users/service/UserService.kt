@@ -4,6 +4,9 @@ import com.example.coagusearch.modules.users.model.User
 import com.example.coagusearch.modules.users.model.UserRepository
 import com.example.coagusearch.shared.asOption
 import arrow.core.Option
+import com.example.coagusearch.modules.appointment.model.DoctorAppointmentsRepository
+import com.example.coagusearch.modules.appointment.response.SingleAppointmentResponse
+import com.example.coagusearch.modules.appointment.service.toEpochSecond
 import com.example.coagusearch.modules.users.model.UserBloodType
 import com.example.coagusearch.modules.users.model.UserBodyInfo
 import com.example.coagusearch.modules.users.model.UserBodyInfoRepository
@@ -13,19 +16,23 @@ import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationship
 import com.example.coagusearch.modules.users.model.UserGender
 import com.example.coagusearch.modules.users.model.UserRhType
 import com.example.coagusearch.modules.users.request.UserBodyInfoSaveRequest
+import com.example.coagusearch.modules.users.response.PatientMainScreen
 import com.example.coagusearch.modules.users.response.UserResponse
 import com.example.coagusearch.shared.RestException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 @Service
 class UserService @Autowired constructor(
         private val userRepository: UserRepository,
         private val userBodyInfoRepository: UserBodyInfoRepository,
         private val userDoctorPatientRelationshipRepository: UserDoctorPatientRelationshipRepository,
-        private val userDoctorMedicalRelationshipRepository: UserDoctorMedicalRelationshipRepository
+        private val userDoctorMedicalRelationshipRepository: UserDoctorMedicalRelationshipRepository,
+        private val doctorAppointmentsRepository: DoctorAppointmentsRepository
 ) {
     fun getUserById(id: Long): Option<User> =
             userRepository.findById(id).asOption()
@@ -60,7 +67,7 @@ class UserService @Autowired constructor(
                            userBodyInfoSaveRequest: UserBodyInfoSaveRequest) {
         var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
 
-        if(bodyInfo == null){
+        if (bodyInfo == null) {
             saveBodyInfo(
                     UserBodyInfo(
                             user = user,
@@ -69,17 +76,16 @@ class UserService @Autowired constructor(
                             dateOfBirth = null,
                             height = userBodyInfoSaveRequest.height,
                             weight = userBodyInfoSaveRequest.weight,
-                            bloodType = if(userBodyInfoSaveRequest.bloodType != null)
+                            bloodType = if (userBodyInfoSaveRequest.bloodType != null)
                                 UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
-                            rhType = if(userBodyInfoSaveRequest.rhType != null)
+                            rhType = if (userBodyInfoSaveRequest.rhType != null)
                                 UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
-                            gender = if(userBodyInfoSaveRequest.gender != null)
+                            gender = if (userBodyInfoSaveRequest.gender != null)
                                 UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
 
                     )
             )
-        }
-        else{
+        } else {
             userBodyInfoRepository.deleteById(bodyInfo.id!!)
             saveBodyInfo(
                     UserBodyInfo(
@@ -89,11 +95,11 @@ class UserService @Autowired constructor(
                             dateOfBirth = null,
                             height = userBodyInfoSaveRequest.height,
                             weight = userBodyInfoSaveRequest.weight,
-                            bloodType = if(userBodyInfoSaveRequest.bloodType != null)
+                            bloodType = if (userBodyInfoSaveRequest.bloodType != null)
                                 UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
-                            rhType = if(userBodyInfoSaveRequest.rhType != null)
+                            rhType = if (userBodyInfoSaveRequest.rhType != null)
                                 UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
-                            gender = if(userBodyInfoSaveRequest.gender != null)
+                            gender = if (userBodyInfoSaveRequest.gender != null)
                                 UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
 
                     )
@@ -102,9 +108,10 @@ class UserService @Autowired constructor(
 
 
     }
+
     //TODO: Add necessary checks and I assumed there is a doctor for medical but this is not the case
     fun getMyPatients(user: User): List<UserResponse> {
-        if(user.type == UserCaseType.Doctor ){
+        if (user.type == UserCaseType.Doctor) {
             return userDoctorPatientRelationshipRepository.findByDoctor(user).map {
                 val patientBodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(it.patient)
                 UserResponse(
@@ -122,7 +129,7 @@ class UserService @Autowired constructor(
 
                 )
             }
-        }else if(user.type == UserCaseType.Medical ){
+        } else if (user.type == UserCaseType.Medical) {
             val doctor = userDoctorMedicalRelationshipRepository.findByMedical(user)
             return userDoctorPatientRelationshipRepository.findByDoctor(doctor!!.doctor).map {
                 val patientBodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(it.patient)
@@ -141,7 +148,7 @@ class UserService @Autowired constructor(
 
                 )
             }
-        }else{
+        } else {
             throw RestException(
                     "Exception.notFound",
                     HttpStatus.UNAUTHORIZED,
@@ -149,6 +156,30 @@ class UserService @Autowired constructor(
                     user.id!!
             )
         }
+
+    }
+
+    fun getPatientMainScreen(user: User): PatientMainScreen {
+        val now = LocalDateTime.now(ZoneId.of("Turkey")).toEpochSecond()
+        var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
+        var nextAppointment = doctorAppointmentsRepository.findAllByPatient(user).firstOrNull {
+            LocalDateTime.of(it.year, it.month, it.day, it.hour, it.minute).toEpochSecond() > now
+        }
+        var doctorInfo = if (nextAppointment != null)
+            userBodyInfoRepository.findFirstByUserOrderByIdDesc(nextAppointment.doctor) else null
+        return PatientMainScreen(
+                patientMissingInfo = bodyInfo?.isMissing() ?: true,
+                patientNextAppointment = if (nextAppointment != null)
+                    SingleAppointmentResponse(
+                            doctorName = doctorInfo?.name,
+                            doctorSurname = doctorInfo?.surname,
+                            day = nextAppointment.day,
+                            month = nextAppointment.month,
+                            minute = nextAppointment.minute,
+                            year = nextAppointment.year,
+                            hour = nextAppointment.hour
+                    ) else null
+        )
 
     }
 

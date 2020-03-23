@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository
 @Repository
 interface DoctorAppointmentsRepository : JpaRepository<DoctorAppointments, KeyType> {
    fun findAllByDoctor(doctor: User): List <DoctorAppointments>
+   fun findAllByPatient(patient: User): List <DoctorAppointments>
 }

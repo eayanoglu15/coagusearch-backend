@@ -54,10 +54,17 @@ data class UserBodyInfo(
 ) : DbEntity() {
     override fun equalityProperties(): Collection<KProperty1<out DbEntity, Any?>> =
             listOf(UserBodyInfo::id)
+
+    fun isMissing(): Boolean {
+        return dateOfBirth == null || height == null || weight == null
+                || bloodType == null || rhType == null || gender == null
+
+
+    }
 }
 
 enum class UserGender {
-Male,Female
+    Male, Female
 }
 
 enum class UserRhType {

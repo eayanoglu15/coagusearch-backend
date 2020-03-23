@@ -4,6 +4,7 @@ import com.example.coagusearch.modules.base.BaseController
 import com.example.coagusearch.shared.ApiResponse
 import com.example.coagusearch.modules.users.response.UserResponse
 import com.example.coagusearch.modules.users.request.UserBodyInfoSaveRequest
+import com.example.coagusearch.modules.users.response.PatientMainScreen
 import com.example.coagusearch.modules.users.service.UserService
 import com.example.coagusearch.security.CurrentUser
 import com.example.coagusearch.security.UserPrincipal
@@ -67,6 +68,14 @@ class UserController @Autowired constructor(
          userService.saveBodyInfoByUser(userPrincipal.user,userBodyInfoSaveRequest).asOkResponse()
         return ApiResponse.fromMessage(messageSource, locale,
                 true, "General.successfulSave").asOkResponse()
+    }
+
+    @GetMapping("/getPatientMainScreen")
+    fun getPatientMainScreen(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<PatientMainScreen> {
+        return userService.getPatientMainScreen(userPrincipal.user).asOkResponse()
     }
 
 

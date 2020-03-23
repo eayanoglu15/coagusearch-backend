@@ -5,18 +5,25 @@ import com.example.coagusearch.modules.appointment.model.DoctorAppointmentsRepos
 import com.example.coagusearch.modules.appointment.request.SaveAppointmentsForUserRequest
 import com.example.coagusearch.modules.appointment.response.DailyAvailablityResponse
 import com.example.coagusearch.modules.appointment.response.HoursAvailablityResponse
+import com.example.coagusearch.modules.appointment.response.SingleAppointmentResponse
+import com.example.coagusearch.modules.appointment.response.UserAppointmentResponse
 import com.example.coagusearch.modules.appointment.response.WeeklyAvalibilityResponse
+import com.example.coagusearch.modules.base.model.Language
 import com.example.coagusearch.modules.users.model.User
+import com.example.coagusearch.modules.users.model.UserBodyInfoRepository
 import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationshipRepository
-import com.example.coagusearch.modules.users.model.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 @Service
 class AppointmentDataMapService @Autowired constructor(
         private val doctorPatientRelationshipRepository: UserDoctorPatientRelationshipRepository,
-        private val doctorAppointmentsRepository: DoctorAppointmentsRepository
+        private val doctorAppointmentsRepository: DoctorAppointmentsRepository,
+        private val userBodyInfoRepository: UserBodyInfoRepository
 ) {
     fun getNextSevenDaysPeriod(): WeeklyAvalibilityResponse {
         var weeklyList = getSevenDay()
@@ -34,11 +41,11 @@ class AppointmentDataMapService @Autowired constructor(
 
     private fun getHoursOfDay(): List<HoursAvailablityResponse> {
         val hours = Hours()
-        return hours.hours.map { hour->
-            hours.minutes.map {minute->
+        return hours.hours.map { hour ->
+            hours.minutes.map { minute ->
                 HoursAvailablityResponse(
                         hour = hour,
-                        minute =minute
+                        minute = minute
                 )
             }
         }.toList().flatten()
@@ -57,27 +64,33 @@ class AppointmentDataMapService @Autowired constructor(
         }
         return weeklyList
     }
-   //TODO: Add doctor patient check
+
+    //TODO: Add doctor patient check
     fun getAppointmentTimes(patient: User)
             : WeeklyAvalibilityResponse {
         var response = getNextSevenDaysPeriod()
         var doctor = doctorPatientRelationshipRepository.findByPatient(patient)!!.doctor
+        var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor)
         var doctorsBusyTime = doctorAppointmentsRepository.findAllByDoctor(doctor)
-        doctorsBusyTime.map { app->
-          response.week.find { it.day == app.day &&
-                  it.month==app.month &&
-                  it.year == app.year
-          }?.hours?.find {  it.hour == app.hour && it.minute == app.minute }?.available = false
+        doctorsBusyTime.map { app ->
+            response.week.find {
+                it.day == app.day &&
+                        it.month == app.month &&
+                        it.year == app.year
+            }?.hours?.find { it.hour == app.hour && it.minute == app.minute }?.available = false
         }
+        response.doctorName = bodyInfo?.name
+        response.doctorSurname = bodyInfo?.surname
         return response
     }
+
     //TODO: Add doctor patient check
     //TODO: check if patient has an appointment for the future
     fun saveAppointmentForPatient(patient: User,
                                   saveAppointmentsForUserRequest: SaveAppointmentsForUserRequest) {
         val doctor = doctorPatientRelationshipRepository.findByPatient(patient)!!.doctor
         doctorAppointmentsRepository.save(DoctorAppointments(
-                doctor=doctor,
+                doctor = doctor,
                 patient = patient,
                 day = saveAppointmentsForUserRequest.day,
                 month = saveAppointmentsForUserRequest.month,
@@ -88,11 +101,57 @@ class AppointmentDataMapService @Autowired constructor(
 
     }
 
+    fun getByUser(user: User, language: Language): UserAppointmentResponse {
+        val now = LocalDateTime.now(ZoneId.of("Europe/Istanbul")).toEpochSecond()
+        val doctor = doctorPatientRelationshipRepository.findByPatient(user)?.doctor
+        var doctorInfo = if (doctor != null)
+            userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor) else null
+        val allAppointments = doctorAppointmentsRepository.findAllByPatient(user)
+        val nextAppointments = allAppointments.firstOrNull {
+            LocalDateTime.of(it.year, it.month, it.day, it.hour, it.minute).toEpochSecond() > now
+        }
+        val oldAppointments = allAppointments.filter {
+            LocalDateTime.of(it.year, it.month, it.day, it.hour, it.minute).toEpochSecond() < now
+        }
+        return UserAppointmentResponse(
+                nextAppointment = if (nextAppointments != null)
+                    SingleAppointmentResponse(
+                            doctorName = doctorInfo?.name,
+                            doctorSurname = doctorInfo?.surname,
+                            day = nextAppointments.day,
+                            month = nextAppointments.month,
+                            minute = nextAppointments.minute,
+                            year = nextAppointments.year,
+                            hour = nextAppointments.hour
+                    ) else null,
+                oldAppointment = oldAppointments.map {
+                    SingleAppointmentResponse(
+                            doctorName = doctorInfo?.name,
+                            doctorSurname = doctorInfo?.surname,
+                            day = it.day,
+                            month = it.month,
+                            minute = it.minute,
+                            year = it.year,
+                            hour = it.hour
+                    )
+                }
+
+
+        )
+
+    }
+
     data class Hours(
             var hours: List<Int> = listOf(9, 10, 11, 13, 14, 15, 16),
             var minutes: List<Int> = listOf(0, 20, 40)
     )
 
+
+}
+
+fun LocalDateTime.toEpochSecond(): Long {
+    val zone = ZoneId.of("Europe/Istanbul")
+    return this.toEpochSecond(zone.rules.getOffset(this))
 
 }
 

@@ -3,9 +3,11 @@ package com.example.coagusearch.modules.appointment
 
 import com.example.coagusearch.backend.FirebaseNotificationSystem.FirebaseNotificationSender
 import com.example.coagusearch.modules.appointment.request.SaveAppointmentsForUserRequest
+import com.example.coagusearch.modules.appointment.response.UserAppointmentResponse
 import com.example.coagusearch.modules.appointment.response.WeeklyAvalibilityResponse
 import com.example.coagusearch.modules.appointment.service.AppointmentDataMapService
 import com.example.coagusearch.modules.base.BaseController
+import com.example.coagusearch.modules.base.model.toLanguage
 import com.example.coagusearch.modules.users.service.UserService
 import com.example.coagusearch.security.CurrentUser
 import com.example.coagusearch.security.UserPrincipal
@@ -35,15 +37,26 @@ class AppointmentController @Autowired constructor(
         private val firebaseNotificationSender: FirebaseNotificationSender
 ) : BaseController() {
 
-    @GetMapping("/getByUser")
+    @GetMapping("/getAvailableTimes")
     @ApiOperation(value = "Gets appointment time by user", response = WeeklyAvalibilityResponse::class)
-    fun getRegularMedicationOfUser(
+    fun getAvailableTimes(
             @CurrentUser userPrincipal: UserPrincipal,
             locale: Locale
     ): ResponseEntity<WeeklyAvalibilityResponse> {
         val user = userPrincipal.user
         return appointmentDataMapService.getAppointmentTimes(user).asOkResponse()
     }
+
+    @GetMapping("/getByUser")
+    @ApiOperation(value = "Gets appointment time by user", response = UserAppointmentResponse::class)
+    fun getByUserAppointment(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<UserAppointmentResponse> {
+        val user = userPrincipal.user
+        return appointmentDataMapService.getByUser(user,locale.toLanguage()).asOkResponse()
+    }
+
 
 
     @GetMapping("/notificationTest")

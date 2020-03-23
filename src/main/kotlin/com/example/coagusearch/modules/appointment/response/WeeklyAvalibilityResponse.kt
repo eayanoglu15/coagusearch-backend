@@ -3,7 +3,8 @@ package com.example.coagusearch.modules.appointment.response
 import io.swagger.annotations.ApiModelProperty
 
 data class WeeklyAvalibilityResponse(
-
+        var doctorName: String? = null,
+        var doctorSurname: String? = null,
         val week:List<DailyAvailablityResponse>
 )
 
