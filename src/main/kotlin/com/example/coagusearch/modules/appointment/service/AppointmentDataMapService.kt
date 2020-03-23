@@ -2,6 +2,7 @@ package com.example.coagusearch.modules.appointment.service
 
 import com.example.coagusearch.modules.appointment.model.DoctorAppointments
 import com.example.coagusearch.modules.appointment.model.DoctorAppointmentsRepository
+import com.example.coagusearch.modules.appointment.request.DeleteAppointmentsForUserRequest
 import com.example.coagusearch.modules.appointment.request.SaveAppointmentsForUserRequest
 import com.example.coagusearch.modules.appointment.response.DailyAvailablityResponse
 import com.example.coagusearch.modules.appointment.response.HoursAvailablityResponse
@@ -12,7 +13,9 @@ import com.example.coagusearch.modules.base.model.Language
 import com.example.coagusearch.modules.users.model.User
 import com.example.coagusearch.modules.users.model.UserBodyInfoRepository
 import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationshipRepository
+import com.example.coagusearch.shared.RestException
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -116,6 +119,7 @@ class AppointmentDataMapService @Autowired constructor(
         return UserAppointmentResponse(
                 nextAppointment = if (nextAppointments != null)
                     SingleAppointmentResponse(
+                            id= nextAppointments.id!!,
                             doctorName = doctorInfo?.name,
                             doctorSurname = doctorInfo?.surname,
                             day = nextAppointments.day,
@@ -126,6 +130,7 @@ class AppointmentDataMapService @Autowired constructor(
                     ) else null,
                 oldAppointment = oldAppointments.map {
                     SingleAppointmentResponse(
+                            id = it.id!!,
                             doctorName = doctorInfo?.name,
                             doctorSurname = doctorInfo?.surname,
                             day = it.day,
@@ -138,6 +143,21 @@ class AppointmentDataMapService @Autowired constructor(
 
 
         )
+
+    }
+
+    fun deleteAppointmentForPatient(user: User,
+                                    deleteAppointmentsForUserRequest: DeleteAppointmentsForUserRequest) {
+        var appointment = doctorAppointmentsRepository.findById(deleteAppointmentsForUserRequest.appointmentId)
+                .map { it }
+                .orElseThrow {  RestException(
+                        "Exception.notFound",
+                        HttpStatus.UNAUTHORIZED,
+                        "Appointment",
+                        deleteAppointmentsForUserRequest.appointmentId
+                ) }
+        doctorAppointmentsRepository.deleteById(appointment.id!!)
+
 
     }
 

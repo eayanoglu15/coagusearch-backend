@@ -171,6 +171,7 @@ class UserService @Autowired constructor(
                 patientMissingInfo = bodyInfo?.isMissing() ?: true,
                 patientNextAppointment = if (nextAppointment != null)
                     SingleAppointmentResponse(
+                            id= nextAppointment.id!!,
                             doctorName = doctorInfo?.name,
                             doctorSurname = doctorInfo?.surname,
                             day = nextAppointment.day,

@@ -2,6 +2,7 @@ package com.example.coagusearch.modules.appointment
 
 
 import com.example.coagusearch.backend.FirebaseNotificationSystem.FirebaseNotificationSender
+import com.example.coagusearch.modules.appointment.request.DeleteAppointmentsForUserRequest
 import com.example.coagusearch.modules.appointment.request.SaveAppointmentsForUserRequest
 import com.example.coagusearch.modules.appointment.response.UserAppointmentResponse
 import com.example.coagusearch.modules.appointment.response.WeeklyAvalibilityResponse
@@ -76,12 +77,29 @@ class AppointmentController @Autowired constructor(
             value = "Saves appointment for doctor.",
             response = com.example.coagusearch.shared.ApiResponse::class
     )
-    fun saveRegularMedicineInfo(
+    fun saveAppointmentInfo(
             @Valid @RequestBody saveAppointmentsForUserRequest: SaveAppointmentsForUserRequest,
             @CurrentUser user: UserPrincipal,
             locale: Locale
     ): ResponseEntity<com.example.coagusearch.shared.ApiResponse> {
         appointmentDataMapService.saveAppointmentForPatient(user.user,saveAppointmentsForUserRequest)
+        return com.example.coagusearch.shared.ApiResponse.fromMessage(messageSource, locale,
+                true, "General.successfulSave").asOkResponse()
+    }
+
+
+
+    @PostMapping("/delete")
+    @ApiOperation(
+            value = "Deletes appointment for doctor.",
+            response = com.example.coagusearch.shared.ApiResponse::class
+    )
+    fun deleteAppointmentInfo(
+            @Valid @RequestBody deleteAppointmentsForUserRequest: DeleteAppointmentsForUserRequest,
+            @CurrentUser user: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<com.example.coagusearch.shared.ApiResponse> {
+        appointmentDataMapService.deleteAppointmentForPatient(user.user,deleteAppointmentsForUserRequest)
         return com.example.coagusearch.shared.ApiResponse.fromMessage(messageSource, locale,
                 true, "General.successfulSave").asOkResponse()
     }
