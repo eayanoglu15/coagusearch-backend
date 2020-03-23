@@ -10,5 +10,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface UserRegularMedicationRepository : JpaRepository<UserRegularMedication, KeyType> {
-    fun findAllByUser(user: User) : List<UserRegularMedication>
+    fun findAllByUserAndActive(user: User,active: Boolean = true) : List<UserRegularMedication>
 }

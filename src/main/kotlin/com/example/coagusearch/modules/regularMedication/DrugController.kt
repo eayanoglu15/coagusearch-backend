@@ -2,6 +2,7 @@ package com.example.coagusearch.modules.regularMedication
 
 import com.example.coagusearch.modules.base.BaseController
 import com.example.coagusearch.modules.base.model.toLanguage
+import com.example.coagusearch.modules.regularMedication.request.DeleteMedicineInfoRequest
 import com.example.coagusearch.modules.regularMedication.request.MedicineInfoRequest
 import com.example.coagusearch.modules.regularMedication.response.AllDrugInfoResponse
 import com.example.coagusearch.modules.regularMedication.response.UserMedicineResponse
@@ -68,6 +69,22 @@ class DrugController @Autowired constructor(
             locale: Locale
     ): ResponseEntity<UserMedicineResponse> {
         drugService.saveRegularMedicineInfo(user.user, locale.toLanguage(), saveRegularMedicineInfoRequest)
+        return drugService.getByUser(user.user,locale.toLanguage()).asOkResponse()
+    }
+
+
+    @PostMapping("/deleteRegularMedication")
+    @ApiOperation(
+            value = "deletes the regular medicine info.",
+            response = ApiResponse::class
+    )
+    fun deleteRegularMedicineInfo(
+            @ApiParam(required = true, name = "deleteRegularMEdicatiın", value = "Save Status Request object")
+            @Valid @RequestBody deleteRegularMedicineInfoRequest: DeleteMedicineInfoRequest,
+            @CurrentUser user: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<UserMedicineResponse> {
+        drugService.deleteRegularMedicineInfo(user.user, locale.toLanguage(), deleteRegularMedicineInfoRequest)
         return drugService.getByUser(user.user,locale.toLanguage()).asOkResponse()
     }
 }

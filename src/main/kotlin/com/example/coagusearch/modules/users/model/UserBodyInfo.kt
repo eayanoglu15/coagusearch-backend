@@ -19,22 +19,17 @@ import kotlin.reflect.KProperty1
 
 @Entity
 @Table(
-        name = "User_body_info", uniqueConstraints = [
-    UniqueConstraint(columnNames = ["user_id"]),
-    UniqueConstraint(columnNames = ["id"])
-]
+        name = "user_body_info"
 )
 @ApiModel(description = "Model representing a user's authentication properties")
 data class UserBodyInfo(
         @field:OneToOne(fetch = FetchType.LAZY, optional = false)
         @field:JoinColumn(
                 name = "user_id",
-                unique = true,
-                updatable = false,
-
                 nullable = false
         )
         var user: User,
+
         var name: String,
         var surname: String,
 

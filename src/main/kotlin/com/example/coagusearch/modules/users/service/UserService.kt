@@ -58,23 +58,48 @@ class UserService @Autowired constructor(
 
     fun saveBodyInfoByUser(user: User,
                            userBodyInfoSaveRequest: UserBodyInfoSaveRequest) {
-        saveBodyInfo(
-                UserBodyInfo(
-                        user = user,
-                        name = userBodyInfoSaveRequest.name!!,
-                        surname = userBodyInfoSaveRequest.surname!!,
-                        dateOfBirth = null,
-                        height = userBodyInfoSaveRequest.height,
-                        weight = userBodyInfoSaveRequest.weight,
-                        bloodType = if(userBodyInfoSaveRequest.bloodType != null)
-                            UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
-                        rhType = if(userBodyInfoSaveRequest.rhType != null)
-                            UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
-                        gender = if(userBodyInfoSaveRequest.gender != null)
-                            UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
+        var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
 
-                )
-        )
+        if(bodyInfo == null){
+            saveBodyInfo(
+                    UserBodyInfo(
+                            user = user,
+                            name = userBodyInfoSaveRequest.name!!,
+                            surname = userBodyInfoSaveRequest.surname!!,
+                            dateOfBirth = null,
+                            height = userBodyInfoSaveRequest.height,
+                            weight = userBodyInfoSaveRequest.weight,
+                            bloodType = if(userBodyInfoSaveRequest.bloodType != null)
+                                UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
+                            rhType = if(userBodyInfoSaveRequest.rhType != null)
+                                UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
+                            gender = if(userBodyInfoSaveRequest.gender != null)
+                                UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
+
+                    )
+            )
+        }
+        else{
+            userBodyInfoRepository.deleteById(bodyInfo.id!!)
+            saveBodyInfo(
+                    UserBodyInfo(
+                            user = user,
+                            name = userBodyInfoSaveRequest.name!!,
+                            surname = userBodyInfoSaveRequest.surname!!,
+                            dateOfBirth = null,
+                            height = userBodyInfoSaveRequest.height,
+                            weight = userBodyInfoSaveRequest.weight,
+                            bloodType = if(userBodyInfoSaveRequest.bloodType != null)
+                                UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
+                            rhType = if(userBodyInfoSaveRequest.rhType != null)
+                                UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
+                            gender = if(userBodyInfoSaveRequest.gender != null)
+                                UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
+
+                    )
+            )
+        }
+
 
     }
     //TODO: Add necessary checks and I assumed there is a doctor for medical but this is not the case
