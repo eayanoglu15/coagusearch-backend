@@ -64,7 +64,9 @@ class AuthService @Autowired constructor(
                         user = newUser,
                         name = userSaveRequest.name!!,
                         surname = userSaveRequest.surname!!,
-                        dateOfBirth = null,
+                        birthDay = userSaveRequest.birthDay,
+                        birthMonth = userSaveRequest.birthMonth,
+                        birthYear = userSaveRequest.birthYear,
                         height = userSaveRequest.height,
                         weight = userSaveRequest.weight,
                         bloodType = if(userSaveRequest.bloodType != null)
@@ -110,7 +112,9 @@ class AuthService @Autowired constructor(
                         user = newUser,
                         name = userSaveRequest.name!!,
                         surname = userSaveRequest.surname!!,
-                        dateOfBirth = null,
+                        birthDay = userSaveRequest.birthDay,
+                        birthMonth = userSaveRequest.birthMonth,
+                        birthYear = userSaveRequest.birthYear,
                         height = userSaveRequest.height,
                         weight = userSaveRequest.weight,
                         bloodType = if(userSaveRequest.bloodType != null)

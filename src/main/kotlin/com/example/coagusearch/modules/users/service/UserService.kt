@@ -49,12 +49,14 @@ class UserService @Autowired constructor(
                 userId = user.id!!,
                 name = bodyInfo?.name,
                 surname = bodyInfo?.surname,
-                dateOfBirth = bodyInfo?.dateOfBirth.toString(),
+                birthDay = bodyInfo?.birthDay,
+                birthMonth = bodyInfo?.birthMonth,
+                birthYear = bodyInfo?.birthYear,
                 height = bodyInfo?.height,
                 weight = bodyInfo?.weight,
-                bloodType = bodyInfo?.bloodType.toString(),
-                rhType = bodyInfo?.rhType.toString(),
-                gender = bodyInfo?.gender.toString()
+                bloodType = if (bodyInfo?.bloodType != null) bodyInfo.bloodType.toString() else null,
+                rhType = if (bodyInfo?.rhType != null) bodyInfo.rhType.toString() else null,
+                gender = if (bodyInfo?.gender != null) bodyInfo.gender.toString() else null
         )
     }
 
@@ -73,7 +75,9 @@ class UserService @Autowired constructor(
                             user = user,
                             name = userBodyInfoSaveRequest.name!!,
                             surname = userBodyInfoSaveRequest.surname!!,
-                            dateOfBirth = null,
+                            birthDay = userBodyInfoSaveRequest.birthDay,
+                            birthMonth = userBodyInfoSaveRequest.birthMonth,
+                            birthYear = userBodyInfoSaveRequest.birthYear,
                             height = userBodyInfoSaveRequest.height,
                             weight = userBodyInfoSaveRequest.weight,
                             bloodType = if (userBodyInfoSaveRequest.bloodType != null)
@@ -92,7 +96,9 @@ class UserService @Autowired constructor(
                             user = user,
                             name = userBodyInfoSaveRequest.name!!,
                             surname = userBodyInfoSaveRequest.surname!!,
-                            dateOfBirth = null,
+                            birthDay = userBodyInfoSaveRequest.birthDay,
+                            birthMonth = userBodyInfoSaveRequest.birthMonth,
+                            birthYear = userBodyInfoSaveRequest.birthYear,
                             height = userBodyInfoSaveRequest.height,
                             weight = userBodyInfoSaveRequest.weight,
                             bloodType = if (userBodyInfoSaveRequest.bloodType != null)
@@ -120,7 +126,9 @@ class UserService @Autowired constructor(
                         userId = it.patient.id!!,
                         name = patientBodyInfo?.name,
                         surname = patientBodyInfo?.surname,
-                        dateOfBirth = patientBodyInfo?.dateOfBirth.toString(),
+                        birthDay = patientBodyInfo?.birthDay,
+                        birthMonth = patientBodyInfo?.birthMonth,
+                        birthYear = patientBodyInfo?.birthYear,
                         height = patientBodyInfo?.height,
                         weight = patientBodyInfo?.weight,
                         bloodType = patientBodyInfo?.bloodType.toString(),
@@ -139,12 +147,14 @@ class UserService @Autowired constructor(
                         userId = it.patient.id!!,
                         name = patientBodyInfo?.name,
                         surname = patientBodyInfo?.surname,
-                        dateOfBirth = patientBodyInfo?.dateOfBirth.toString(),
+                        birthDay = patientBodyInfo?.birthDay,
+                        birthMonth = patientBodyInfo?.birthMonth,
+                        birthYear = patientBodyInfo?.birthYear,
                         height = patientBodyInfo?.height,
                         weight = patientBodyInfo?.weight,
-                        bloodType = patientBodyInfo?.bloodType.toString(),
-                        rhType = patientBodyInfo?.rhType.toString(),
-                        gender = patientBodyInfo?.gender.toString()
+                        bloodType = if (patientBodyInfo?.bloodType != null) patientBodyInfo.bloodType.toString() else null,
+                        rhType = if (patientBodyInfo?.rhType != null) patientBodyInfo.rhType.toString() else null,
+                        gender = if (patientBodyInfo?.gender != null) patientBodyInfo.gender.toString() else null
 
                 )
             }
@@ -171,7 +181,7 @@ class UserService @Autowired constructor(
                 patientMissingInfo = bodyInfo?.isMissing() ?: true,
                 patientNextAppointment = if (nextAppointment != null)
                     SingleAppointmentResponse(
-                            id= nextAppointment.id!!,
+                            id = nextAppointment.id!!,
                             doctorName = doctorInfo?.name,
                             doctorSurname = doctorInfo?.surname,
                             day = nextAppointment.day,

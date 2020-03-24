@@ -33,8 +33,13 @@ data class UserBodyInfo(
         var name: String,
         var surname: String,
 
-        @field:Column(name = "date_of_birth")
-        var dateOfBirth: Instant? = null,
+        @field:Column(name = "birth_day")
+        var birthDay: Int? = null,
+        @field:Column(name = "birth_month")
+        var birthMonth: Int? = null,
+        @field:Column(name = "birth_year")
+        var birthYear: Int? = null,
+
         var height: Double? = null,
         var weight: Double? = null,
 
@@ -56,8 +61,8 @@ data class UserBodyInfo(
             listOf(UserBodyInfo::id)
 
     fun isMissing(): Boolean {
-        return dateOfBirth == null || height == null || weight == null
-                || bloodType == null || rhType == null || gender == null
+        return birthYear == null || birthMonth == null || birthDay == null || height == null
+                || weight == null || bloodType == null || rhType == null || gender == null
 
 
     }
