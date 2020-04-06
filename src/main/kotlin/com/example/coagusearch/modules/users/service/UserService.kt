@@ -4,9 +4,16 @@ import com.example.coagusearch.modules.users.model.User
 import com.example.coagusearch.modules.users.model.UserRepository
 import com.example.coagusearch.shared.asOption
 import arrow.core.Option
+import arrow.core.Tuple3
+import arrow.core.Tuple3Of
+import arrow.optics.Tuple
+import com.example.coagusearch.modules.appointment.model.DoctorAppointments
 import com.example.coagusearch.modules.appointment.model.DoctorAppointmentsRepository
 import com.example.coagusearch.modules.appointment.response.SingleAppointmentResponse
+import com.example.coagusearch.modules.appointment.service.AppointmentDataMapService
 import com.example.coagusearch.modules.appointment.service.toEpochSecond
+import com.example.coagusearch.modules.base.model.Language
+import com.example.coagusearch.modules.patientData.response.PatientDataResponse
 import com.example.coagusearch.modules.users.model.UserBloodType
 import com.example.coagusearch.modules.users.model.UserBodyInfo
 import com.example.coagusearch.modules.users.model.UserBodyInfoRepository
@@ -16,7 +23,12 @@ import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationship
 import com.example.coagusearch.modules.users.model.UserGender
 import com.example.coagusearch.modules.users.model.UserRhType
 import com.example.coagusearch.modules.users.request.UserBodyInfoSaveRequest
+import com.example.coagusearch.modules.users.response.DoctorMainScreen
+import com.example.coagusearch.modules.users.response.EmergencyPatientDetail
+import com.example.coagusearch.modules.users.response.PatientAppointmentTimeResponse
+import com.example.coagusearch.modules.users.response.PatientDetailScreen
 import com.example.coagusearch.modules.users.response.PatientMainScreen
+import com.example.coagusearch.modules.users.response.TodayPatientDetail
 import com.example.coagusearch.modules.users.response.UserResponse
 import com.example.coagusearch.shared.RestException
 import org.slf4j.LoggerFactory
@@ -32,10 +44,13 @@ class UserService @Autowired constructor(
         private val userBodyInfoRepository: UserBodyInfoRepository,
         private val userDoctorPatientRelationshipRepository: UserDoctorPatientRelationshipRepository,
         private val userDoctorMedicalRelationshipRepository: UserDoctorMedicalRelationshipRepository,
-        private val doctorAppointmentsRepository: DoctorAppointmentsRepository
+        private val doctorAppointmentsRepository: DoctorAppointmentsRepository,
+        private val appointmentDataMapService: AppointmentDataMapService
 ) {
-    fun getUserById(id: Long): Option<User> =
-            userRepository.findById(id).asOption()
+    fun getUserById(id: Long): User =
+            userRepository.findById(id).orElseThrow {
+                RestException("Auth.invalidUser", HttpStatus.BAD_REQUEST)
+            }
 
 
     fun updateUser(user: User) =
@@ -191,6 +206,63 @@ class UserService @Autowired constructor(
                             hour = nextAppointment.hour
                     ) else null
         )
+
+    }
+
+
+    fun getDoctorMainScreen(user: User): DoctorMainScreen {
+        val now = LocalDateTime.now(ZoneId.of("Turkey"))
+        val oneOfThePatient = userDoctorPatientRelationshipRepository.findByDoctor(user).firstOrNull()
+        return DoctorMainScreen(
+                emergencyPatients = if (oneOfThePatient == null)
+                    listOf() else {
+                    val patientBodyInfo = userBodyInfoRepository
+                            .findFirstByUserOrderByIdDesc(oneOfThePatient.patient)
+                    listOf(
+                            EmergencyPatientDetail(
+                                    patientId = oneOfThePatient.patient.id!!,
+                                    userName = patientBodyInfo?.name ?: "",
+                                    userSurname = patientBodyInfo?.surname ?: "",
+                                    arrivalHour = PatientAppointmentTimeResponse(
+                                            hour = now.hour + 1,
+                                            minute = 0
+                                    )
+                            )
+
+                    )
+                }
+                ,
+                todayAppointments = doctorAppointmentsRepository
+                        .findAllByDoctor(user).filter {
+                            it.year == now.year &&
+                                    it.month == now.monthValue &&
+                                    it.day == now.dayOfMonth
+                        }
+                        .map {
+                            val patientBodyInfo = userBodyInfoRepository
+                                    .findFirstByUserOrderByIdDesc(it.patient)
+                            TodayPatientDetail(
+                                    patientId = it.patient.id!!,
+                                    userName = patientBodyInfo?.name ?: "",
+                                    userSurname = patientBodyInfo?.surname ?: "",
+                                    appointmentHour = PatientAppointmentTimeResponse(
+                                            hour = it.hour,
+                                            minute = it.minute
+                                    )
+                            )
+                        }
+        )
+    }
+
+    fun getPatientDetailScreen(user: User, patientId: Long,language: Language): PatientDetailScreen {
+        val patient: User = getUserById(patientId)
+
+        return PatientDetailScreen(
+                patientResponse = getMyUserResponse(patient),
+                userAppointmentResponse = appointmentDataMapService.getByUser(patient, language),
+                userDataResponse = PatientDataResponse()
+        )
+
 
     }
 

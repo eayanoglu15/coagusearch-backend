@@ -15,19 +15,19 @@ import kotlin.reflect.KProperty1
 
 @Entity
 @Table(
-    name = "RefreshToken"
+        name = "RefreshToken"
 )
 data class RefreshToken(
         @field:OneToOne(fetch = FetchType.LAZY, optional = false)
-    @field:JoinColumn(
-        name = "user_id",
-        unique = true,
-        updatable = false,
+        @field:JoinColumn(
+                name = "user_id",
+                unique = true,
+                updatable = false,
 
-        nullable = false
-    )
-    @field:NaturalId
-    var user: User,
+                nullable = false
+        )
+        @field:NaturalId
+        var user: User,
 
         var refreshToken: String?,
 
@@ -35,5 +35,5 @@ data class RefreshToken(
         override var version: LocalDateTime? = null
 ) : DateAudit() {
     override fun equalityProperties(): Collection<KProperty1<out DbEntity, Any?>> =
-        listOf(RefreshToken::user)
+            listOf(RefreshToken::user)
 }

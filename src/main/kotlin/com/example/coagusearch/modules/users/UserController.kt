@@ -1,9 +1,13 @@
 package com.example.coagusearch.modules.users
 
 import com.example.coagusearch.modules.base.BaseController
+import com.example.coagusearch.modules.base.model.toLanguage
+import com.example.coagusearch.modules.users.request.PatientDetailRequest
 import com.example.coagusearch.shared.ApiResponse
 import com.example.coagusearch.modules.users.response.UserResponse
 import com.example.coagusearch.modules.users.request.UserBodyInfoSaveRequest
+import com.example.coagusearch.modules.users.response.DoctorMainScreen
+import com.example.coagusearch.modules.users.response.PatientDetailScreen
 import com.example.coagusearch.modules.users.response.PatientMainScreen
 import com.example.coagusearch.modules.users.service.UserService
 import com.example.coagusearch.security.CurrentUser
@@ -58,14 +62,13 @@ class UserController @Autowired constructor(
     }
 
 
-
     @PostMapping("/saveBodyInfo")
     fun saveAUser(
             @Valid @RequestBody userBodyInfoSaveRequest: UserBodyInfoSaveRequest,
             @CurrentUser userPrincipal: UserPrincipal,
             locale: Locale
     ): ResponseEntity<ApiResponse> {
-         userService.saveBodyInfoByUser(userPrincipal.user,userBodyInfoSaveRequest).asOkResponse()
+        userService.saveBodyInfoByUser(userPrincipal.user, userBodyInfoSaveRequest).asOkResponse()
         return ApiResponse.fromMessage(messageSource, locale,
                 true, "General.successfulSave").asOkResponse()
     }
@@ -76,6 +79,27 @@ class UserController @Autowired constructor(
             locale: Locale
     ): ResponseEntity<PatientMainScreen> {
         return userService.getPatientMainScreen(userPrincipal.user).asOkResponse()
+    }
+
+    @GetMapping("/getDoctorMainScreen")
+    fun getDoctorMainScreen(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<DoctorMainScreen> {
+        return userService.getDoctorMainScreen(userPrincipal.user).asOkResponse()
+    }
+
+    @PostMapping("/getPatientDetail")
+    fun getPatientDetail(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale,
+            @Valid @RequestBody patientDetailRequest: PatientDetailRequest
+    ): ResponseEntity<PatientDetailScreen> {
+        return userService.getPatientDetailScreen(
+                userPrincipal.user,
+                patientDetailRequest.patientId,
+                locale.toLanguage()
+        ).asOkResponse()
     }
 
 
