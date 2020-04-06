@@ -154,6 +154,7 @@ class UserService @Autowired constructor(
             }
         } else if (user.type == UserCaseType.Medical) {
             val doctor = userDoctorMedicalRelationshipRepository.findByMedical(user)
+            //TODO: return error if the doctor is null
             return userDoctorPatientRelationshipRepository.findByDoctor(doctor!!.doctor).map {
                 val patientBodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(it.patient)
                 UserResponse(
@@ -253,7 +254,7 @@ class UserService @Autowired constructor(
                         }
         )
     }
-
+    //TODO: Check if the user is doctor and patientId's doctor is the user
     fun getPatientDetailScreen(user: User, patientId: Long,language: Language): PatientDetailScreen {
         val patient: User = getUserById(patientId)
 
