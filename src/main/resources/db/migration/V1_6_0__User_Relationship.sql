@@ -62,3 +62,17 @@ values ((select id from users where identity_number = '14051222123'),
         (select id from users where identity_number = '14051234123'),
         true,
         nextval('hibernate_sequence'), now()::timestamp);
+
+create table blood_order
+(
+    patient_id     bigint not null,
+    doctor_id  bigint not null,
+    blood_type varchar(255) ,
+    rh_type varchar(255) ,
+    additional_note varchar(4096) ,
+    unit  integer not null,
+    id      bigint NOT NULL primary key ,
+    version timestamp without time zone
+);
+ALTER TABLE public.blood_order ALTER COLUMN doctor_id SET NOT NULL;
+ALTER TABLE public.blood_order ALTER COLUMN patient_id DROP NOT NULL;
