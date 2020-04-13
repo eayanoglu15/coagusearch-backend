@@ -58,21 +58,31 @@ class UserService @Autowired constructor(
 
     fun getMyUserResponse(user: User): UserResponse {
         val bodyInfo: UserBodyInfo? = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
-        return UserResponse(
-                identityNumber = user.identityNumber,
-                type = user.type.toString(),
-                userId = user.id!!,
-                name = bodyInfo?.name,
-                surname = bodyInfo?.surname,
-                birthDay = bodyInfo?.birthDay,
-                birthMonth = bodyInfo?.birthMonth,
-                birthYear = bodyInfo?.birthYear,
-                height = bodyInfo?.height,
-                weight = bodyInfo?.weight,
-                bloodType = if (bodyInfo?.bloodType != null) bodyInfo.bloodType.toString() else null,
-                rhType = if (bodyInfo?.rhType != null) bodyInfo.rhType.toString() else null,
-                gender = if (bodyInfo?.gender != null) bodyInfo.gender.toString() else null
-        )
+        if(bodyInfo == null){
+            throw RestException(
+                    "Exception.notFound",
+                    HttpStatus.UNAUTHORIZED,
+                    "User",
+                    user.id!!
+            )
+        }
+        else{
+            return UserResponse(
+                    identityNumber = user.identityNumber,
+                    type = user.type.toString(),
+                    userId = user.id!!,
+                    name = bodyInfo?.name,
+                    surname = bodyInfo?.surname,
+                    birthDay = bodyInfo?.birthDay,
+                    birthMonth = bodyInfo?.birthMonth,
+                    birthYear = bodyInfo?.birthYear,
+                    height = bodyInfo?.height,
+                    weight = bodyInfo?.weight,
+                    bloodType = if (bodyInfo?.bloodType != null) bodyInfo.bloodType.toString() else null,
+                    rhType = if (bodyInfo?.rhType != null) bodyInfo.rhType.toString() else null,
+                    gender = if (bodyInfo?.gender != null) bodyInfo.gender.toString() else null
+            )
+        }
     }
 
     fun saveBodyInfo(userBodyInfo: UserBodyInfo) {
@@ -84,46 +94,56 @@ class UserService @Autowired constructor(
                            userBodyInfoSaveRequest: UserBodyInfoSaveRequest) {
         var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
 
-        if (bodyInfo == null) {
-            saveBodyInfo(
-                    UserBodyInfo(
-                            user = user,
-                            name = userBodyInfoSaveRequest.name!!,
-                            surname = userBodyInfoSaveRequest.surname!!,
-                            birthDay = userBodyInfoSaveRequest.birthDay,
-                            birthMonth = userBodyInfoSaveRequest.birthMonth,
-                            birthYear = userBodyInfoSaveRequest.birthYear,
-                            height = userBodyInfoSaveRequest.height,
-                            weight = userBodyInfoSaveRequest.weight,
-                            bloodType = if (userBodyInfoSaveRequest.bloodType != null)
-                                UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
-                            rhType = if (userBodyInfoSaveRequest.rhType != null)
-                                UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
-                            gender = if (userBodyInfoSaveRequest.gender != null)
-                                UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
+        if(user.type == UserCaseType.Patient){
+            if (bodyInfo == null) {
+                saveBodyInfo(
+                        UserBodyInfo(
+                                user = user,
+                                name = userBodyInfoSaveRequest.name!!,
+                                surname = userBodyInfoSaveRequest.surname!!,
+                                birthDay = userBodyInfoSaveRequest.birthDay,
+                                birthMonth = userBodyInfoSaveRequest.birthMonth,
+                                birthYear = userBodyInfoSaveRequest.birthYear,
+                                height = userBodyInfoSaveRequest.height,
+                                weight = userBodyInfoSaveRequest.weight,
+                                bloodType = if (userBodyInfoSaveRequest.bloodType != null)
+                                    UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
+                                rhType = if (userBodyInfoSaveRequest.rhType != null)
+                                    UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
+                                gender = if (userBodyInfoSaveRequest.gender != null)
+                                    UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
 
-                    )
-            )
-        } else {
-            userBodyInfoRepository.deleteById(bodyInfo.id!!)
-            saveBodyInfo(
-                    UserBodyInfo(
-                            user = user,
-                            name = userBodyInfoSaveRequest.name!!,
-                            surname = userBodyInfoSaveRequest.surname!!,
-                            birthDay = userBodyInfoSaveRequest.birthDay,
-                            birthMonth = userBodyInfoSaveRequest.birthMonth,
-                            birthYear = userBodyInfoSaveRequest.birthYear,
-                            height = userBodyInfoSaveRequest.height,
-                            weight = userBodyInfoSaveRequest.weight,
-                            bloodType = if (userBodyInfoSaveRequest.bloodType != null)
-                                UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
-                            rhType = if (userBodyInfoSaveRequest.rhType != null)
-                                UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
-                            gender = if (userBodyInfoSaveRequest.gender != null)
-                                UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
+                        )
+                )
+            } else {
+                userBodyInfoRepository.deleteById(bodyInfo.id!!)
+                saveBodyInfo(
+                        UserBodyInfo(
+                                user = user,
+                                name = userBodyInfoSaveRequest.name!!,
+                                surname = userBodyInfoSaveRequest.surname!!,
+                                birthDay = userBodyInfoSaveRequest.birthDay,
+                                birthMonth = userBodyInfoSaveRequest.birthMonth,
+                                birthYear = userBodyInfoSaveRequest.birthYear,
+                                height = userBodyInfoSaveRequest.height,
+                                weight = userBodyInfoSaveRequest.weight,
+                                bloodType = if (userBodyInfoSaveRequest.bloodType != null)
+                                    UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
+                                rhType = if (userBodyInfoSaveRequest.rhType != null)
+                                    UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
+                                gender = if (userBodyInfoSaveRequest.gender != null)
+                                    UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
 
-                    )
+                        )
+                )
+            }
+        }
+        else{
+            throw RestException(
+                    "Patients Only. User Type is not Valid!",
+                    HttpStatus.UNAUTHORIZED,
+                    "User",
+                    user.id!!
             )
         }
 
@@ -143,7 +163,7 @@ class UserService @Autowired constructor(
                         surname = patientBodyInfo?.surname,
                         birthDay = patientBodyInfo?.birthDay,
                         birthMonth = patientBodyInfo?.birthMonth,
-                        birthYear = patientBodyInfo?.birthYear,
+                        birthYear =  patientBodyInfo?.birthYear,
                         height = patientBodyInfo?.height,
                         weight = patientBodyInfo?.weight,
                         bloodType = patientBodyInfo?.bloodType.toString(),
@@ -155,25 +175,36 @@ class UserService @Autowired constructor(
         } else if (user.type == UserCaseType.Medical) {
             val doctor = userDoctorMedicalRelationshipRepository.findByMedical(user)
             //TODO: return error if the doctor is null
-            return userDoctorPatientRelationshipRepository.findByDoctor(doctor!!.doctor).map {
-                val patientBodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(it.patient)
-                UserResponse(
-                        identityNumber = it.patient.identityNumber,
-                        type = it.patient.type.toString(),
-                        userId = it.patient.id!!,
-                        name = patientBodyInfo?.name,
-                        surname = patientBodyInfo?.surname,
-                        birthDay = patientBodyInfo?.birthDay,
-                        birthMonth = patientBodyInfo?.birthMonth,
-                        birthYear = patientBodyInfo?.birthYear,
-                        height = patientBodyInfo?.height,
-                        weight = patientBodyInfo?.weight,
-                        bloodType = if (patientBodyInfo?.bloodType != null) patientBodyInfo.bloodType.toString() else null,
-                        rhType = if (patientBodyInfo?.rhType != null) patientBodyInfo.rhType.toString() else null,
-                        gender = if (patientBodyInfo?.gender != null) patientBodyInfo.gender.toString() else null
-
+            if(doctor == null){
+                throw RestException(
+                        "Exception.notFound",
+                        HttpStatus.UNAUTHORIZED,
+                        "User",
+                        user.id!!
                 )
             }
+            else{
+                return userDoctorPatientRelationshipRepository.findByDoctor(doctor!!.doctor).map {
+                    val patientBodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(it.patient)
+                    UserResponse(
+                            identityNumber = it.patient.identityNumber,
+                            type = it.patient.type.toString(),
+                            userId = it.patient.id!!,
+                            name = patientBodyInfo?.name,
+                            surname = patientBodyInfo?.surname,
+                            birthDay = patientBodyInfo?.birthDay,
+                            birthMonth = patientBodyInfo?.birthMonth,
+                            birthYear = patientBodyInfo?.birthYear,
+                            height = patientBodyInfo?.height,
+                            weight = patientBodyInfo?.weight,
+                            bloodType = if (patientBodyInfo?.bloodType != null) patientBodyInfo.bloodType.toString() else null,
+                            rhType = if (patientBodyInfo?.rhType != null) patientBodyInfo.rhType.toString() else null,
+                            gender = if (patientBodyInfo?.gender != null) patientBodyInfo.gender.toString() else null
+
+                    )
+                }
+            }
+
         } else {
             throw RestException(
                     "Exception.notFound",
@@ -257,14 +288,21 @@ class UserService @Autowired constructor(
     //TODO: Check if the user is doctor and patientId's doctor is the user
     fun getPatientDetailScreen(user: User, patientId: Long,language: Language): PatientDetailScreen {
         val patient: User = getUserById(patientId)
-
-        return PatientDetailScreen(
-                patientResponse = getMyUserResponse(patient),
-                userAppointmentResponse = appointmentDataMapService.getByUser(patient, language),
-                userDataResponse = PatientDataResponse()
-        )
-
-
+        if (user.type == UserCaseType.Doctor){
+            return PatientDetailScreen(
+                    patientResponse = getMyUserResponse(patient),
+                    userAppointmentResponse = appointmentDataMapService.getByUser(patient, language),
+                    userDataResponse = PatientDataResponse()
+            )
+        }
+        else{
+            throw RestException(
+                    "Exception.notFound",
+                    HttpStatus.UNAUTHORIZED,
+                    "User",
+                    user.id!!
+            )
+        }
     }
 
 
