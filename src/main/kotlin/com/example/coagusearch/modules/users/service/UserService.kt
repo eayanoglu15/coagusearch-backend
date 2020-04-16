@@ -61,7 +61,7 @@ class UserService @Autowired constructor(
         if(bodyInfo == null){
             throw RestException(
                     "Exception.notFound",
-                    HttpStatus.UNAUTHORIZED,
+                    HttpStatus.NOT_FOUND,
                     "User",
                     user.id!!
             )
@@ -178,7 +178,7 @@ class UserService @Autowired constructor(
             if(doctor == null){
                 throw RestException(
                         "Exception.notFound",
-                        HttpStatus.UNAUTHORIZED,
+                        HttpStatus.NOT_FOUND,
                         "User",
                         user.id!!
                 )
@@ -288,7 +288,11 @@ class UserService @Autowired constructor(
     //TODO: Check if the user is doctor and patientId's doctor is the user
     fun getPatientDetailScreen(user: User, patientId: Long,language: Language): PatientDetailScreen {
         val patient: User = getUserById(patientId)
-        if (user.type == UserCaseType.Doctor){
+        var validPatientId : Long = 123
+        if(userDoctorPatientRelationshipRepository.findByDoctor(user).filter {it.patient == patient}.size > 0){
+            validPatientId = userDoctorPatientRelationshipRepository.findByDoctor(user).filter {it.patient == patient}[0].patient.id!!
+        }
+        if (user.type == UserCaseType.Doctor && validPatientId == patient.id){
             return PatientDetailScreen(
                     patientResponse = getMyUserResponse(patient),
                     userAppointmentResponse = appointmentDataMapService.getByUser(patient, language),
@@ -297,7 +301,7 @@ class UserService @Autowired constructor(
         }
         else{
             throw RestException(
-                    "Exception.notFound",
+                    "You are either not a doctor or this user is not your patient.",
                     HttpStatus.UNAUTHORIZED,
                     "User",
                     user.id!!

@@ -7,13 +7,11 @@ import com.example.coagusearch.modules.regularMedication.model.UserRegularMedica
 import com.example.coagusearch.modules.regularMedication.model.UserRegularMedicationRepository
 import com.example.coagusearch.modules.regularMedication.request.DeleteMedicineInfoRequest
 import com.example.coagusearch.modules.regularMedication.request.MedicineInfoRequest
-import com.example.coagusearch.modules.regularMedication.response.AllDrugInfoResponse
-import com.example.coagusearch.modules.regularMedication.response.DrugFrequencyResponse
-import com.example.coagusearch.modules.regularMedication.response.GetDrugRequest
-import com.example.coagusearch.modules.regularMedication.response.GetFrequencyRequest
-import com.example.coagusearch.modules.regularMedication.response.MedicineInfoResponse
-import com.example.coagusearch.modules.regularMedication.response.UserMedicineResponse
+import com.example.coagusearch.modules.regularMedication.request.PatientRegularMedicationRequest
+import com.example.coagusearch.modules.regularMedication.response.*
 import com.example.coagusearch.modules.users.model.User
+import com.example.coagusearch.modules.users.model.UserCaseType
+import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationshipRepository
 import com.example.coagusearch.shared.RestException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -24,6 +22,7 @@ import org.springframework.stereotype.Service
 class DrugService @Autowired constructor(
         private val drugInfoRepository: DrugInfoRepository,
         private val drugFrequencyRepository: DrugFrequencyRepository,
+        private val userDoctorPatientRelationshipRepository: UserDoctorPatientRelationshipRepository,
         private val userRegularMedicationRepository: UserRegularMedicationRepository
 ) {
 
@@ -46,6 +45,8 @@ class DrugService @Autowired constructor(
         )
     }
 
+
+
     fun getByUser(user: User, language: Language): UserMedicineResponse {
         return UserMedicineResponse(
                 allDrugs = getAllDrugs(user, language),
@@ -64,6 +65,42 @@ class DrugService @Autowired constructor(
                 }
         )
     }
+    //TODO: Add Usertype check && check whether the patients belong the doctor or not!!
+    fun getRegularMedicinesById(user: User, patient: PatientRegularMedicationRequest, language: Language): UserRegularMedicationResponse{
+        var validPatientId : Long = 123
+        if(userDoctorPatientRelationshipRepository.findByDoctor(user).filter {it.patient.id == patient.patientId}.size > 0){
+            validPatientId = userDoctorPatientRelationshipRepository.findByDoctor(user).filter {it.patient.id == patient.patientId}[0].patient.id!!
+        }
+        if(user.type == UserCaseType.Doctor && validPatientId == patient.patientId){
+            return UserRegularMedicationResponse(
+                    patientDrugs = userRegularMedicationRepository.findAll().filter {
+                        it.user.id == patient.patientId
+                    }.map {
+                        MedicineInfoResponse(
+                                id = it.id!!,
+                                mode = it.mode,
+                                custom = it.custom,
+                                key = it.drug?.key,
+                                frequency = DrugFrequencyResponse(
+                                        key = it.frequency?.key!!,
+                                        title = it.frequency?.detail?.stringByLanguage(language)!!
+                                ),
+                                dosage = it.dosage
+                        )
+                    }
+            )
+        }
+        else{
+            throw RestException(
+                    "You are either not a doctor or this user is not your patient.",
+                    HttpStatus.UNAUTHORIZED,
+                    "Medicine",
+                    user.id!!
+            )
+        }
+
+    }
+
 
     fun saveRegularMedicineInfo(user: User,
                                 language: Language,

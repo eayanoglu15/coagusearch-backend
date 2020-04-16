@@ -4,9 +4,13 @@ import com.example.coagusearch.modules.base.BaseController
 import com.example.coagusearch.modules.base.model.toLanguage
 import com.example.coagusearch.modules.regularMedication.request.DeleteMedicineInfoRequest
 import com.example.coagusearch.modules.regularMedication.request.MedicineInfoRequest
+import com.example.coagusearch.modules.regularMedication.request.PatientRegularMedicationRequest
 import com.example.coagusearch.modules.regularMedication.response.AllDrugInfoResponse
 import com.example.coagusearch.modules.regularMedication.response.UserMedicineResponse
+import com.example.coagusearch.modules.regularMedication.response.UserRegularMedicationResponse
 import com.example.coagusearch.modules.regularMedication.service.DrugService
+import com.example.coagusearch.modules.users.request.PatientDetailRequest
+import com.example.coagusearch.modules.users.response.PatientDetailScreen
 import com.example.coagusearch.security.CurrentUser
 import com.example.coagusearch.security.UserPrincipal
 import com.example.coagusearch.shared.asOkResponse
@@ -54,6 +58,17 @@ class DrugController @Autowired constructor(
     ): ResponseEntity<UserMedicineResponse> {
         val user = userPrincipal.user
         return drugService.getByUser(user,locale.toLanguage()).asOkResponse()
+    }
+
+    @PostMapping("/getPatientRegularMedication")
+    @ApiOperation(value = "Gets requested patient's  drugs", response = UserRegularMedicationResponse::class)
+    fun getPatientRegularMedication(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale,
+            @Valid @RequestBody PatientRegularMedicationRequest: PatientRegularMedicationRequest
+    ): ResponseEntity<UserRegularMedicationResponse> {
+        val user = userPrincipal.user
+        return drugService.getRegularMedicinesById(user, PatientRegularMedicationRequest, locale.toLanguage()).asOkResponse()
     }
 
 
