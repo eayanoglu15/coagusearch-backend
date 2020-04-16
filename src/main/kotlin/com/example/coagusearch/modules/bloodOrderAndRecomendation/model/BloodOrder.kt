@@ -48,6 +48,10 @@ data class BloodOrder(
         @field:Column(name = "rh_type")
         var rhType: UserRhType? = null,
 
+        @field:Enumerated(EnumType.STRING)
+        @field:Column(name = "product_type")
+        var productType: UserBloodOrderType? = null,
+
         var unit : Int,
 
         @field:Column(name = "additional_note")
@@ -59,4 +63,9 @@ data class BloodOrder(
     override fun equalityProperties(): Collection<KProperty1<out DbEntity, Any?>> =
             listOf(BloodOrder::id)
 
+}
+
+enum class UserBloodOrderType {
+        FFP,
+        PC
 }

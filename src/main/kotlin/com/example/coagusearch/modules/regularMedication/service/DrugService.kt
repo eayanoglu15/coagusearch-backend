@@ -65,6 +65,12 @@ class DrugService @Autowired constructor(
                 }
         )
     }
+
+
+
+
+
+
     //TODO: Add Usertype check && check whether the patients belong the doctor or not!!
     fun getRegularMedicinesById(user: User, patient: PatientRegularMedicationRequest, language: Language): UserRegularMedicationResponse{
         var validPatientId : Long = 123

@@ -13,7 +13,10 @@ import com.example.coagusearch.modules.appointment.response.SingleAppointmentRes
 import com.example.coagusearch.modules.appointment.service.AppointmentDataMapService
 import com.example.coagusearch.modules.appointment.service.toEpochSecond
 import com.example.coagusearch.modules.base.model.Language
+import com.example.coagusearch.modules.base.model.toLanguage
+import com.example.coagusearch.modules.bloodOrderAndRecomendation.service.BloodService
 import com.example.coagusearch.modules.patientData.response.PatientDataResponse
+import com.example.coagusearch.modules.regularMedication.service.DrugService
 import com.example.coagusearch.modules.users.model.UserBloodType
 import com.example.coagusearch.modules.users.model.UserBodyInfo
 import com.example.coagusearch.modules.users.model.UserBodyInfoRepository
@@ -27,10 +30,12 @@ import com.example.coagusearch.modules.users.response.DoctorMainScreen
 import com.example.coagusearch.modules.users.response.EmergencyPatientDetail
 import com.example.coagusearch.modules.users.response.PatientAppointmentTimeResponse
 import com.example.coagusearch.modules.users.response.PatientDetailScreen
+import com.example.coagusearch.modules.users.response.PatientGeneralInfoResponse
 import com.example.coagusearch.modules.users.response.PatientMainScreen
 import com.example.coagusearch.modules.users.response.TodayPatientDetail
 import com.example.coagusearch.modules.users.response.UserResponse
 import com.example.coagusearch.shared.RestException
+import com.example.coagusearch.shared.asOkResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -45,7 +50,9 @@ class UserService @Autowired constructor(
         private val userDoctorPatientRelationshipRepository: UserDoctorPatientRelationshipRepository,
         private val userDoctorMedicalRelationshipRepository: UserDoctorMedicalRelationshipRepository,
         private val doctorAppointmentsRepository: DoctorAppointmentsRepository,
-        private val appointmentDataMapService: AppointmentDataMapService
+        private val appointmentDataMapService: AppointmentDataMapService,
+        private val drugService: DrugService,
+        private val bloodService: BloodService
 ) {
     fun getUserById(id: Long): User =
             userRepository.findById(id).orElseThrow {
@@ -58,15 +65,14 @@ class UserService @Autowired constructor(
 
     fun getMyUserResponse(user: User): UserResponse {
         val bodyInfo: UserBodyInfo? = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
-        if(bodyInfo == null){
+        if (bodyInfo == null) {
             throw RestException(
                     "Exception.notFound",
                     HttpStatus.NOT_FOUND,
                     "User",
                     user.id!!
             )
-        }
-        else{
+        } else {
             return UserResponse(
                     identityNumber = user.identityNumber,
                     type = user.type.toString(),
@@ -94,7 +100,7 @@ class UserService @Autowired constructor(
                            userBodyInfoSaveRequest: UserBodyInfoSaveRequest) {
         var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
 
-        if(user.type == UserCaseType.Patient){
+        if (user.type == UserCaseType.Patient) {
             if (bodyInfo == null) {
                 saveBodyInfo(
                         UserBodyInfo(
@@ -137,8 +143,7 @@ class UserService @Autowired constructor(
                         )
                 )
             }
-        }
-        else{
+        } else {
             throw RestException(
                     "Patients Only. User Type is not Valid!",
                     HttpStatus.UNAUTHORIZED,
@@ -151,56 +156,34 @@ class UserService @Autowired constructor(
     }
 
     //TODO: Add necessary checks and I assumed there is a doctor for medical but this is not the case
-    fun getMyPatients(user: User): List<UserResponse> {
+    fun getMyPatients(user: User): List<PatientGeneralInfoResponse> {
         if (user.type == UserCaseType.Doctor) {
             return userDoctorPatientRelationshipRepository.findByDoctor(user).map {
                 val patientBodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(it.patient)
-                UserResponse(
-                        identityNumber = it.patient.identityNumber,
-                        type = it.patient.type.toString(),
+                PatientGeneralInfoResponse(
                         userId = it.patient.id!!,
                         name = patientBodyInfo?.name,
-                        surname = patientBodyInfo?.surname,
-                        birthDay = patientBodyInfo?.birthDay,
-                        birthMonth = patientBodyInfo?.birthMonth,
-                        birthYear =  patientBodyInfo?.birthYear,
-                        height = patientBodyInfo?.height,
-                        weight = patientBodyInfo?.weight,
-                        bloodType = patientBodyInfo?.bloodType.toString(),
-                        rhType = patientBodyInfo?.rhType.toString(),
-                        gender = patientBodyInfo?.gender.toString()
+                        surname = patientBodyInfo?.surname
 
                 )
             }
         } else if (user.type == UserCaseType.Medical) {
             val doctor = userDoctorMedicalRelationshipRepository.findByMedical(user)
             //TODO: return error if the doctor is null
-            if(doctor == null){
+            if (doctor == null) {
                 throw RestException(
                         "Exception.notFound",
                         HttpStatus.NOT_FOUND,
                         "User",
                         user.id!!
                 )
-            }
-            else{
+            } else {
                 return userDoctorPatientRelationshipRepository.findByDoctor(doctor!!.doctor).map {
                     val patientBodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(it.patient)
-                    UserResponse(
-                            identityNumber = it.patient.identityNumber,
-                            type = it.patient.type.toString(),
+                    PatientGeneralInfoResponse(
                             userId = it.patient.id!!,
                             name = patientBodyInfo?.name,
-                            surname = patientBodyInfo?.surname,
-                            birthDay = patientBodyInfo?.birthDay,
-                            birthMonth = patientBodyInfo?.birthMonth,
-                            birthYear = patientBodyInfo?.birthYear,
-                            height = patientBodyInfo?.height,
-                            weight = patientBodyInfo?.weight,
-                            bloodType = if (patientBodyInfo?.bloodType != null) patientBodyInfo.bloodType.toString() else null,
-                            rhType = if (patientBodyInfo?.rhType != null) patientBodyInfo.rhType.toString() else null,
-                            gender = if (patientBodyInfo?.gender != null) patientBodyInfo.gender.toString() else null
-
+                            surname = patientBodyInfo?.surname
                     )
                 }
             }
@@ -285,23 +268,22 @@ class UserService @Autowired constructor(
                         }
         )
     }
+
     //TODO: Check if the user is doctor and patientId's doctor is the user
-    fun getPatientDetailScreen(user: User, patientId: Long,language: Language): PatientDetailScreen {
+    fun getPatientDetailScreen(user: User, patientId: Long, language: Language): PatientDetailScreen {
         val patient: User = getUserById(patientId)
-        var validPatientId : Long = 123
-        if(userDoctorPatientRelationshipRepository.findByDoctor(user).filter {it.patient == patient}.size > 0){
-            validPatientId = userDoctorPatientRelationshipRepository.findByDoctor(user).filter {it.patient == patient}[0].patient.id!!
-        }
-        if (user.type == UserCaseType.Doctor && validPatientId == patient.id){
+        val doctor: User = userDoctorPatientRelationshipRepository.findByPatient(patient)!!.doctor
+        if (doctor.id == user.id) {
             return PatientDetailScreen(
                     patientResponse = getMyUserResponse(patient),
                     userAppointmentResponse = appointmentDataMapService.getByUser(patient, language),
-                    userDataResponse = PatientDataResponse()
+                    userDataResponse = PatientDataResponse(),
+                    patientDrugs = drugService.getByUser(patient, language).userDrugs,
+                    previousBloodOrders = bloodService.getPreviousOrdersByPatient(patient,language)
             )
-        }
-        else{
+        } else {
             throw RestException(
-                    "You are either not a doctor or this user is not your patient.",
+                    "You do not have permission to reach this resource",
                     HttpStatus.UNAUTHORIZED,
                     "User",
                     user.id!!

@@ -4,6 +4,7 @@ import com.example.coagusearch.modules.base.BaseController
 import com.example.coagusearch.modules.base.model.toLanguage
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.BloodOrderRequest
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.BloodStatusResponse
+import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.DoctorBloodOrderResponse
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.service.BloodService
 import com.example.coagusearch.security.CurrentUser
 import com.example.coagusearch.security.UserPrincipal
@@ -13,6 +14,7 @@ import io.swagger.annotations.ApiOperation
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -38,6 +40,16 @@ class BloodOrderController @Autowired constructor(
     ): ResponseEntity<BloodStatusResponse> {
         val user = userPrincipal.user
         return bloodService.handleOrder(user,locale.toLanguage(),bloodOrderRequest).asOkResponse()
+    }
+
+    @GetMapping("/previousOrders")
+    @ApiOperation(value = "Order blood", response = BloodStatusResponse::class)
+    fun getDoctorsPreviousOrder(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<List<DoctorBloodOrderResponse>> {
+        val user = userPrincipal.user
+        return bloodService.getDoctorsPreviousOrders(user,locale.toLanguage()).asOkResponse()
     }
 
 

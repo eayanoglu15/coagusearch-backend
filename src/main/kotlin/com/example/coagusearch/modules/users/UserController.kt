@@ -8,6 +8,7 @@ import com.example.coagusearch.modules.users.response.UserResponse
 import com.example.coagusearch.modules.users.request.UserBodyInfoSaveRequest
 import com.example.coagusearch.modules.users.response.DoctorMainScreen
 import com.example.coagusearch.modules.users.response.PatientDetailScreen
+import com.example.coagusearch.modules.users.response.PatientGeneralInfoResponse
 import com.example.coagusearch.modules.users.response.PatientMainScreen
 import com.example.coagusearch.modules.users.service.UserService
 import com.example.coagusearch.security.CurrentUser
@@ -56,7 +57,7 @@ class UserController @Autowired constructor(
     fun getMyPatients(
             @CurrentUser userPrincipal: UserPrincipal,
             locale: Locale
-    ): ResponseEntity<List<UserResponse>> {
+    ): ResponseEntity<List<PatientGeneralInfoResponse>> {
         val user = userPrincipal.user
         return userService.getMyPatients(user).asOkResponse()
     }
