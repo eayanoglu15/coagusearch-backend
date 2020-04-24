@@ -99,8 +99,6 @@ class UserService @Autowired constructor(
     fun saveBodyInfoByUser(user: User,
                            userBodyInfoSaveRequest: UserBodyInfoSaveRequest) {
         var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
-
-        if (user.type == UserCaseType.Patient) {
             if (bodyInfo == null) {
                 saveBodyInfo(
                         UserBodyInfo(
@@ -143,16 +141,7 @@ class UserService @Autowired constructor(
                         )
                 )
             }
-        } else {
-            throw RestException(
-                    "Patients Only. User Type is not Valid!",
-                    HttpStatus.UNAUTHORIZED,
-                    "User",
-                    user.id!!
-            )
         }
-
-
     }
 
     //TODO: Add necessary checks and I assumed there is a doctor for medical but this is not the case
