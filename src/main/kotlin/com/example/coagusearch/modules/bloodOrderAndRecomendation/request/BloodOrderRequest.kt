@@ -5,6 +5,6 @@ data class BloodOrderRequest (
         val rhType: String,
         val patientId: Long?,
         val productType: String,
-        val unit: Int,
+        val unit: Double,
         val additionalNote: String?
 )

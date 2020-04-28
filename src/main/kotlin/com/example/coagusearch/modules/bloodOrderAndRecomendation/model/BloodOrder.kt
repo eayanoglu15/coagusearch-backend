@@ -2,6 +2,7 @@ package com.example.coagusearch.modules.bloodOrderAndRecomendation.model
 
 import com.example.coagusearch.modules.base.model.DbEntity
 import com.example.coagusearch.modules.base.model.KeyType
+import com.example.coagusearch.modules.patientData.model.UserBloodTest
 import com.example.coagusearch.modules.users.model.User
 import com.example.coagusearch.modules.users.model.UserBloodType
 import com.example.coagusearch.modules.users.model.UserRhType
@@ -16,6 +17,7 @@ import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.Table
 import kotlin.reflect.KProperty1
+
 @Entity
 @Table(
         name = "blood_order"
@@ -52,7 +54,22 @@ data class BloodOrder(
         @field:Column(name = "product_type")
         var productType: UserBloodOrderType? = null,
 
-        var unit : Int,
+        var quantity: Double,
+
+        var unit: String,
+
+        @field:Column(name = "diagnosis")
+        var diagnosis: String? = null,
+
+        @field:Enumerated(EnumType.STRING)
+        @field:Column(name = "kind")
+        var kind: OrderKind,
+
+        @field:ManyToOne(fetch = FetchType.LAZY)
+        @field:JoinColumn(
+                name = "blood_test"
+        )
+        var bloodTest: UserBloodTest? = null,
 
         @field:Column(name = "additional_note")
         var note: String? = null,
@@ -65,7 +82,15 @@ data class BloodOrder(
 
 }
 
+enum class OrderKind {
+    Medicine,
+    Blood
+}
+
 enum class UserBloodOrderType {
-        FFP,
-        PC
+    FFP,
+    FibrinojenConcentrate,
+    PlateletConcentrate,
+    TXA,
+    PCC
 }

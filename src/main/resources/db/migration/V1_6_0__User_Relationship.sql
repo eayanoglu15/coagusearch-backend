@@ -69,8 +69,13 @@ create table blood_order
     doctor_id  bigint not null,
     blood_type varchar(255) ,
     rh_type varchar(255) ,
+    product_type varchar(255) ,
+    quantity DOUBLE PRECISION ,
+    diagnosis varchar(255) ,
+    kind varchar(255) ,
+    bloodTest bigint ,
     additional_note varchar(4096) ,
-    unit  integer not null,
+    unit  varchar(255) not null,
     id      bigint NOT NULL primary key ,
     version timestamp without time zone
 );

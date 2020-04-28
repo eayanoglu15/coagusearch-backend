@@ -2,20 +2,14 @@ package com.example.coagusearch.modules.users.service
 
 import com.example.coagusearch.modules.users.model.User
 import com.example.coagusearch.modules.users.model.UserRepository
-import com.example.coagusearch.shared.asOption
-import arrow.core.Option
-import arrow.core.Tuple3
-import arrow.core.Tuple3Of
-import arrow.optics.Tuple
-import com.example.coagusearch.modules.appointment.model.DoctorAppointments
 import com.example.coagusearch.modules.appointment.model.DoctorAppointmentsRepository
 import com.example.coagusearch.modules.appointment.response.SingleAppointmentResponse
 import com.example.coagusearch.modules.appointment.service.AppointmentDataMapService
 import com.example.coagusearch.modules.appointment.service.toEpochSecond
 import com.example.coagusearch.modules.base.model.Language
-import com.example.coagusearch.modules.base.model.toLanguage
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.service.BloodService
 import com.example.coagusearch.modules.patientData.response.PatientDataResponse
+import com.example.coagusearch.modules.patientData.service.PatientDataService
 import com.example.coagusearch.modules.regularMedication.service.DrugService
 import com.example.coagusearch.modules.users.model.UserBloodType
 import com.example.coagusearch.modules.users.model.UserBodyInfo
@@ -35,7 +29,6 @@ import com.example.coagusearch.modules.users.response.PatientMainScreen
 import com.example.coagusearch.modules.users.response.TodayPatientDetail
 import com.example.coagusearch.modules.users.response.UserResponse
 import com.example.coagusearch.shared.RestException
-import com.example.coagusearch.shared.asOkResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -52,13 +45,16 @@ class UserService @Autowired constructor(
         private val doctorAppointmentsRepository: DoctorAppointmentsRepository,
         private val appointmentDataMapService: AppointmentDataMapService,
         private val drugService: DrugService,
-        private val bloodService: BloodService
+        private val bloodService: BloodService,
+        private val patientDataService: PatientDataService
 ) {
     fun getUserById(id: Long): User =
             userRepository.findById(id).orElseThrow {
                 RestException("Auth.invalidUser", HttpStatus.BAD_REQUEST)
             }
 
+    fun getBodyInfoByUser(user: User): UserBodyInfo? =
+            userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
 
     fun updateUser(user: User) =
             userRepository.save(user)
@@ -266,7 +262,7 @@ class UserService @Autowired constructor(
             return PatientDetailScreen(
                     patientResponse = getMyUserResponse(patient),
                     userAppointmentResponse = appointmentDataMapService.getByUser(patient, language),
-                    userDataResponse = PatientDataResponse(),
+                    lastDataAnalysisTime = patientDataService.getPatientLastAnalysis(patient),
                     patientDrugs = drugService.getByUser(patient, language).userDrugs,
                     previousBloodOrders = bloodService.getPreviousOrdersByPatient(patient,language)
             )

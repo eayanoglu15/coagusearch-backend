@@ -35,7 +35,7 @@ values (nextval('hibernate_sequence'), now()::timestamp,
         (select id
          from public.users
          where identity_number = '23244242542'),
-        'Fatma', 'Salik', 10, 5, 1972, 167.3, 68, '0', 'Positive', 'Female');
+        'Fatma', 'Salik', 10, 5, 1972, 167.3, 68, 'O', 'Positive', 'Female');
 
 
 insert into public.users(id, version, type, identity_number, password)
@@ -48,4 +48,4 @@ values (nextval('hibernate_sequence'), now()::timestamp,
         (select id
          from public.users
          where identity_number = '73647583920'),
-        'Ayşe', 'Alip', 21, 11, 1978, 165.3, 68, '0', 'Positive', 'Female');
+        'Ayşe', 'Alip', 21, 11, 1978, 165.3, 68, 'O', 'Positive', 'Female');

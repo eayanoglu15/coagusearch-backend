@@ -12,7 +12,8 @@ CREATE TABLE public.user_body_info
     weight        double precision,
     blood_type    character varying(255),
     rh_type       character varying(255),
-    gender        character varying(255)
+    gender        character varying(255),
+    platelet_number  integer
 );
 ALTER TABLE public.user_body_info
     add constraint foreign_key_user_body_info_users foreign key (user_id)

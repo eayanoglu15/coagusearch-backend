@@ -3,11 +3,13 @@ package com.example.coagusearch.modules.bloodOrderAndRecomendation
 import com.example.coagusearch.modules.base.BaseController
 import com.example.coagusearch.modules.base.model.toLanguage
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.BloodOrderRequest
+import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.OrderForUserDataRequest
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.BloodStatusResponse
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.DoctorBloodOrderResponse
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.service.BloodService
 import com.example.coagusearch.security.CurrentUser
 import com.example.coagusearch.security.UserPrincipal
+import com.example.coagusearch.shared.ApiResponse
 import com.example.coagusearch.shared.asOkResponse
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -39,7 +41,7 @@ class BloodOrderController @Autowired constructor(
             @Valid @RequestBody bloodOrderRequest: BloodOrderRequest
     ): ResponseEntity<BloodStatusResponse> {
         val user = userPrincipal.user
-        return bloodService.handleOrder(user,locale.toLanguage(),bloodOrderRequest).asOkResponse()
+        return bloodService.handleOrder(user, locale.toLanguage(), bloodOrderRequest).asOkResponse()
     }
 
     @GetMapping("/previousOrders")
@@ -49,10 +51,21 @@ class BloodOrderController @Autowired constructor(
             locale: Locale
     ): ResponseEntity<List<DoctorBloodOrderResponse>> {
         val user = userPrincipal.user
-        return bloodService.getDoctorsPreviousOrders(user,locale.toLanguage()).asOkResponse()
+        return bloodService.getDoctorsPreviousOrders(user, locale.toLanguage()).asOkResponse()
     }
 
 
+    @PostMapping("/orderForUserData")
+    @ApiOperation(value = "Order blood", response = BloodStatusResponse::class)
+    fun orderForUserData(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale,
+            @Valid @RequestBody orderForUserDataRequest: OrderForUserDataRequest
+    ): ResponseEntity<ApiResponse> {
+        bloodService.saveOrderForBloodTest(orderForUserDataRequest).asOkResponse()
+        return ApiResponse.fromMessage(messageSource, locale,
+                true, "General.successfulSave").asOkResponse()
+    }
 
 
 }

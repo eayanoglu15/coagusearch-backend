@@ -54,6 +54,9 @@ data class UserBodyInfo(
         @field:Enumerated(EnumType.STRING)
         var gender: UserGender? = null,
 
+        @field:Column(name = "platelet_number")
+        var plateletNumber: Int? = null,
+
         override var id: KeyType? = null,
         override var version: LocalDateTime? = null
 ) : DbEntity() {

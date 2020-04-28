@@ -2,6 +2,7 @@ package com.example.coagusearch.modules.users
 
 import com.example.coagusearch.modules.base.BaseController
 import com.example.coagusearch.modules.base.model.toLanguage
+import com.example.coagusearch.modules.users.request.PatientBodyInfoSaveRequest
 import com.example.coagusearch.modules.users.request.PatientDetailRequest
 import com.example.coagusearch.shared.ApiResponse
 import com.example.coagusearch.modules.users.response.UserResponse
@@ -70,6 +71,18 @@ class UserController @Autowired constructor(
             locale: Locale
     ): ResponseEntity<ApiResponse> {
         userService.saveBodyInfoByUser(userPrincipal.user, userBodyInfoSaveRequest).asOkResponse()
+        return ApiResponse.fromMessage(messageSource, locale,
+                true, "General.successfulSave").asOkResponse()
+    }
+
+    @PostMapping("/saveBodyInfoOfPatient")
+    fun saveOfPatientBodyInfo(
+            @Valid @RequestBody userBodyInfoSaveRequest: PatientBodyInfoSaveRequest,
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<ApiResponse> {
+        val user = userService.getUserById(userBodyInfoSaveRequest.patientId)
+        userService.saveBodyInfoOfPatient(user, userBodyInfoSaveRequest).asOkResponse()
         return ApiResponse.fromMessage(messageSource, locale,
                 true, "General.successfulSave").asOkResponse()
     }

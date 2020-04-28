@@ -5,6 +5,9 @@ data class UserBloodOrderResponse (
         val bloodType: String? = null,
         val rhType: String? = null,
         val productType: String? = null,
-        val unit: Int,
-        val additionalNote: String?
+        val quantity: Double,
+        val additionalNote: String?,
+        val bloodTestId:Long?,
+        val kind: String?,
+        val unit: String?
 )
