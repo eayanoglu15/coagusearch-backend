@@ -19,6 +19,7 @@ import com.example.coagusearch.modules.users.model.UserDoctorMedicalRelationship
 import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationshipRepository
 import com.example.coagusearch.modules.users.model.UserGender
 import com.example.coagusearch.modules.users.model.UserRhType
+import com.example.coagusearch.modules.users.request.PatientBodyInfoSaveRequest
 import com.example.coagusearch.modules.users.request.UserBodyInfoSaveRequest
 import com.example.coagusearch.modules.users.response.DoctorMainScreen
 import com.example.coagusearch.modules.users.response.EmergencyPatientDetail
@@ -95,50 +96,96 @@ class UserService @Autowired constructor(
     fun saveBodyInfoByUser(user: User,
                            userBodyInfoSaveRequest: UserBodyInfoSaveRequest) {
         var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
-            if (bodyInfo == null) {
-                saveBodyInfo(
-                        UserBodyInfo(
-                                user = user,
-                                name = userBodyInfoSaveRequest.name!!,
-                                surname = userBodyInfoSaveRequest.surname!!,
-                                birthDay = userBodyInfoSaveRequest.birthDay,
-                                birthMonth = userBodyInfoSaveRequest.birthMonth,
-                                birthYear = userBodyInfoSaveRequest.birthYear,
-                                height = userBodyInfoSaveRequest.height,
-                                weight = userBodyInfoSaveRequest.weight,
-                                bloodType = if (userBodyInfoSaveRequest.bloodType != null)
-                                    UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
-                                rhType = if (userBodyInfoSaveRequest.rhType != null)
-                                    UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
-                                gender = if (userBodyInfoSaveRequest.gender != null)
-                                    UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
+        if (bodyInfo == null) {
+            saveBodyInfo(
+                    UserBodyInfo(
+                            user = user,
+                            name = userBodyInfoSaveRequest.name!!,
+                            surname = userBodyInfoSaveRequest.surname!!,
+                            birthDay = userBodyInfoSaveRequest.birthDay,
+                            birthMonth = userBodyInfoSaveRequest.birthMonth,
+                            birthYear = userBodyInfoSaveRequest.birthYear,
+                            height = userBodyInfoSaveRequest.height,
+                            weight = userBodyInfoSaveRequest.weight,
+                            bloodType = if (userBodyInfoSaveRequest.bloodType != null)
+                                UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
+                            rhType = if (userBodyInfoSaveRequest.rhType != null)
+                                UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
+                            gender = if (userBodyInfoSaveRequest.gender != null)
+                                UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
 
-                        )
-                )
-            } else {
-                userBodyInfoRepository.deleteById(bodyInfo.id!!)
-                saveBodyInfo(
-                        UserBodyInfo(
-                                user = user,
-                                name = userBodyInfoSaveRequest.name!!,
-                                surname = userBodyInfoSaveRequest.surname!!,
-                                birthDay = userBodyInfoSaveRequest.birthDay,
-                                birthMonth = userBodyInfoSaveRequest.birthMonth,
-                                birthYear = userBodyInfoSaveRequest.birthYear,
-                                height = userBodyInfoSaveRequest.height,
-                                weight = userBodyInfoSaveRequest.weight,
-                                bloodType = if (userBodyInfoSaveRequest.bloodType != null)
-                                    UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
-                                rhType = if (userBodyInfoSaveRequest.rhType != null)
-                                    UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
-                                gender = if (userBodyInfoSaveRequest.gender != null)
-                                    UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
+                    )
+            )
+        } else {
+            userBodyInfoRepository.deleteById(bodyInfo.id!!)
+            saveBodyInfo(
+                    UserBodyInfo(
+                            user = user,
+                            name = userBodyInfoSaveRequest.name!!,
+                            surname = userBodyInfoSaveRequest.surname!!,
+                            birthDay = userBodyInfoSaveRequest.birthDay,
+                            birthMonth = userBodyInfoSaveRequest.birthMonth,
+                            birthYear = userBodyInfoSaveRequest.birthYear,
+                            height = userBodyInfoSaveRequest.height,
+                            weight = userBodyInfoSaveRequest.weight,
+                            bloodType = if (userBodyInfoSaveRequest.bloodType != null)
+                                UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
+                            rhType = if (userBodyInfoSaveRequest.rhType != null)
+                                UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
+                            gender = if (userBodyInfoSaveRequest.gender != null)
+                                UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
 
-                        )
-                )
-            }
+                    )
+            )
         }
     }
+
+    fun saveBodyInfoOfPatient(user: User, userBodyInfoSaveRequest: PatientBodyInfoSaveRequest) {
+        var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
+        if (bodyInfo == null) {
+            saveBodyInfo(
+                    UserBodyInfo(
+                            user = user,
+                            name = userBodyInfoSaveRequest.name!!,
+                            surname = userBodyInfoSaveRequest.surname!!,
+                            birthDay = userBodyInfoSaveRequest.birthDay,
+                            birthMonth = userBodyInfoSaveRequest.birthMonth,
+                            birthYear = userBodyInfoSaveRequest.birthYear,
+                            height = userBodyInfoSaveRequest.height,
+                            weight = userBodyInfoSaveRequest.weight,
+                            bloodType = if (userBodyInfoSaveRequest.bloodType != null)
+                                UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
+                            rhType = if (userBodyInfoSaveRequest.rhType != null)
+                                UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
+                            gender = if (userBodyInfoSaveRequest.gender != null)
+                                UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
+
+                    )
+            )
+        } else {
+            userBodyInfoRepository.deleteById(bodyInfo.id!!)
+            saveBodyInfo(
+                    UserBodyInfo(
+                            user = user,
+                            name = userBodyInfoSaveRequest.name!!,
+                            surname = userBodyInfoSaveRequest.surname!!,
+                            birthDay = userBodyInfoSaveRequest.birthDay,
+                            birthMonth = userBodyInfoSaveRequest.birthMonth,
+                            birthYear = userBodyInfoSaveRequest.birthYear,
+                            height = userBodyInfoSaveRequest.height,
+                            weight = userBodyInfoSaveRequest.weight,
+                            bloodType = if (userBodyInfoSaveRequest.bloodType != null)
+                                UserBloodType.valueOf(userBodyInfoSaveRequest.bloodType!!) else null,
+                            rhType = if (userBodyInfoSaveRequest.rhType != null)
+                                UserRhType.valueOf(userBodyInfoSaveRequest.rhType!!) else null,
+                            gender = if (userBodyInfoSaveRequest.gender != null)
+                                UserGender.valueOf(userBodyInfoSaveRequest.gender!!) else null
+
+                    )
+            )
+        }
+    }
+
 
     //TODO: Add necessary checks and I assumed there is a doctor for medical but this is not the case
     fun getMyPatients(user: User): List<PatientGeneralInfoResponse> {
@@ -264,7 +311,8 @@ class UserService @Autowired constructor(
                     userAppointmentResponse = appointmentDataMapService.getByUser(patient, language),
                     lastDataAnalysisTime = patientDataService.getPatientLastAnalysis(patient),
                     patientDrugs = drugService.getByUser(patient, language).userDrugs,
-                    previousBloodOrders = bloodService.getPreviousOrdersByPatient(patient,language)
+                    previousBloodOrders = bloodService.getPreviousOrdersByPatient(patient, language)
+                            .filter{it.kind.equals("Blood")}
             )
         } else {
             throw RestException(
