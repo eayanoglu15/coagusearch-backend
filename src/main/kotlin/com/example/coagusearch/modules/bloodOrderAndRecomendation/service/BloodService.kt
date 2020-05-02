@@ -94,7 +94,7 @@ class BloodService @Autowired constructor(
                     additionalNote = if (it.note != null) it.note.toString() else null,
                     patientName = bodyInfo?.name,
                     patientSurname = bodyInfo?.surname,
-                    bloodTestId = it.bloodTest?.id!!,
+                    bloodTestId = it.bloodTest?.id,
                     kind = if (it.kind != null) it.kind.toString() else null,
                     unit = if (it.unit != null) it.unit else null
 
