@@ -10,5 +10,7 @@ data class DoctorBloodOrderResponse (
         val patientSurname : String? = null,
         val bloodTestId:Long?,
         val kind: String?,
-        val unit: String?
+        val unit: String?,
+        val isReady : Boolean,
+        val bloodOrderId: Long
 )

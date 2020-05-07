@@ -8,3 +8,6 @@ data class BloodOrderRequest (
         val unit: Double,
         val additionalNote: String?
 )
+data class SetReadyBloodOrderRequest (
+        val bloodOrderId: Long
+)

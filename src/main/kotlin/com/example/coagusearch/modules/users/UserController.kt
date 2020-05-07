@@ -2,6 +2,7 @@ package com.example.coagusearch.modules.users
 
 import com.example.coagusearch.modules.base.BaseController
 import com.example.coagusearch.modules.base.model.toLanguage
+import com.example.coagusearch.modules.users.request.AmbulancePatientRequest
 import com.example.coagusearch.modules.users.request.PatientBodyInfoSaveRequest
 import com.example.coagusearch.modules.users.request.PatientDetailRequest
 import com.example.coagusearch.shared.ApiResponse
@@ -116,5 +117,22 @@ class UserController @Autowired constructor(
         ).asOkResponse()
     }
 
+    @PostMapping("/saveAmbulancePatient")
+    fun saveAmbulancePatient(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale,
+            @Valid @RequestBody ambulancePatientRequest: AmbulancePatientRequest
+    ): ResponseEntity<ApiResponse> {
+        val patient = userService.getUserByIdentityNumber(ambulancePatientRequest.userIdentityNumber)
+        if(patient == null){
+           return ApiResponse.fromMessage(messageSource, locale,
+                   false, "Auth.invalidUser").asOkResponse()
+        }else{
+            userService.emergencyPatientAdd(patient)
+            return ApiResponse.fromMessage(messageSource, locale,
+                    true, "General.successfulSave").asOkResponse()
+        }
+
+    }
 
 }

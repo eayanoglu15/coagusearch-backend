@@ -4,8 +4,10 @@ import com.example.coagusearch.modules.base.BaseController
 import com.example.coagusearch.modules.base.model.toLanguage
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.BloodOrderRequest
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.OrderForUserDataRequest
+import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.SetReadyBloodOrderRequest
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.BloodStatusResponse
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.DoctorBloodOrderResponse
+import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.MedicalBloodOrderResponse
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.service.BloodService
 import com.example.coagusearch.security.CurrentUser
 import com.example.coagusearch.security.UserPrincipal
@@ -67,5 +69,26 @@ class BloodOrderController @Autowired constructor(
                 true, "General.successfulSave").asOkResponse()
     }
 
+    @GetMapping("/getOrdersForMedical")
+    @ApiOperation(value = "Order blood", response = BloodStatusResponse::class)
+    fun getMedicalOrder(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale
+    ): ResponseEntity<MedicalBloodOrderResponse> {
+        val user = userPrincipal.user
+        return bloodService.getMedicalOrders(user, locale.toLanguage()).asOkResponse()
+    }
+
+    @PostMapping("/setReadyOrder")
+    @ApiOperation(value = "Order blood", response = BloodStatusResponse::class)
+    fun setReadyOrder(
+            @CurrentUser userPrincipal: UserPrincipal,
+            locale: Locale,
+            @Valid @RequestBody setReadyBloodOrderRequest: SetReadyBloodOrderRequest
+    ): ResponseEntity<MedicalBloodOrderResponse> {
+        val user = userPrincipal.user
+        bloodService.addDoneTheOrder(setReadyBloodOrderRequest.bloodOrderId).asOkResponse()
+        return bloodService.getMedicalOrders(user, locale.toLanguage()).asOkResponse()
+    }
 
 }

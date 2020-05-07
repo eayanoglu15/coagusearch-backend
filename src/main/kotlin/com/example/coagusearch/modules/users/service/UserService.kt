@@ -17,6 +17,8 @@ import com.example.coagusearch.modules.users.model.UserBodyInfoRepository
 import com.example.coagusearch.modules.users.model.UserCaseType
 import com.example.coagusearch.modules.users.model.UserDoctorMedicalRelationshipRepository
 import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationshipRepository
+import com.example.coagusearch.modules.users.model.UserEmergencyInfo
+import com.example.coagusearch.modules.users.model.UserEmergencyInfoRepository
 import com.example.coagusearch.modules.users.model.UserGender
 import com.example.coagusearch.modules.users.model.UserRhType
 import com.example.coagusearch.modules.users.request.PatientBodyInfoSaveRequest
@@ -34,8 +36,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 
 @Service
 class UserService @Autowired constructor(
@@ -47,7 +51,8 @@ class UserService @Autowired constructor(
         private val appointmentDataMapService: AppointmentDataMapService,
         private val drugService: DrugService,
         private val bloodService: BloodService,
-        private val patientDataService: PatientDataService
+        private val patientDataService: PatientDataService,
+        private val userEmergencyInfoRepository: UserEmergencyInfoRepository
 ) {
     fun getUserById(id: Long): User =
             userRepository.findById(id).orElseThrow {
@@ -259,26 +264,23 @@ class UserService @Autowired constructor(
 
     fun getDoctorMainScreen(user: User): DoctorMainScreen {
         val now = LocalDateTime.now(ZoneId.of("Turkey"))
-        val oneOfThePatient = userDoctorPatientRelationshipRepository.findByDoctor(user).firstOrNull()
+        val nowInstant = now.toInstant(ZoneId.of("Europe/Istanbul").getRules().getOffset(Instant.now()))
         return DoctorMainScreen(
-                emergencyPatients = if (oneOfThePatient == null)
-                    listOf() else {
-                    val patientBodyInfo = userBodyInfoRepository
-                            .findFirstByUserOrderByIdDesc(oneOfThePatient.patient)
-                    listOf(
-                            EmergencyPatientDetail(
-                                    patientId = oneOfThePatient.patient.id!!,
-                                    userName = patientBodyInfo?.name ?: "",
-                                    userSurname = patientBodyInfo?.surname ?: "",
-                                    arrivalHour = PatientAppointmentTimeResponse(
-                                            hour = now.hour + 1,
-                                            minute = 0
-                                    )
-                            )
-
+                emergencyPatients = userEmergencyInfoRepository.findByDoctorAndHospitalReachTimeGreaterThanEqual(user,nowInstant)
+                        .map {
+                    var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(it.patient)
+                    EmergencyPatientDetail(
+                            patientId = it.patient.id!!,
+                            userName = bodyInfo?.name ?: "",
+                            userSurname = bodyInfo?.surname ?: "",
+                            arrivalHour = PatientAppointmentTimeResponse(
+                                    hour = it.hospitalReachTime.atZone(ZoneId.of("Turkey")).hour,
+                                    minute = it.hospitalReachTime.atZone(ZoneId.of("Turkey")).minute
+                            ),
+                            isDataReady =   nowInstant > it.dataReadyTime,
+                            isUserAtAmbulance =it.hospitalReachTime >nowInstant
                     )
-                }
-                ,
+                },
                 todayAppointments = doctorAppointmentsRepository
                         .findAllByDoctor(user).filter {
                             it.year == now.year &&
@@ -324,6 +326,25 @@ class UserService @Autowired constructor(
         }
     }
 
+    fun getUserByIdentityNumber(userIdentityNumber: String): User?  {
+        return userRepository.findByIdentityNumber(userIdentityNumber)
+    }
+
+    fun emergencyPatientAdd(patient: User) : Boolean {
+        var nowInstant = LocalDateTime.now(ZoneId.of("Turkey"))
+                .toInstant(ZoneId.of("Europe/Istanbul").getRules().getOffset(Instant.now()))
+        val doctor = userDoctorPatientRelationshipRepository.findByPatient(patient)?.doctor ?: return false
+        userEmergencyInfoRepository.save(
+                UserEmergencyInfo(
+                        doctor= doctor,
+                        patient = patient,
+                        dataReadyTime = nowInstant.plusSeconds(60*5),
+                        hospitalReachTime = nowInstant.plusSeconds(60*20)
+                )
+        )
+        patientDataService.addRandomPatientData(patient,nowInstant.plusSeconds(60*5))
+        return true
+    }
 
     companion object {
         val logger = LoggerFactory.getLogger(UserService::class.java)

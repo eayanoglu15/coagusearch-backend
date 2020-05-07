@@ -5,6 +5,7 @@ import com.example.coagusearch.modules.base.model.Language
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.service.BloodService
 import com.example.coagusearch.modules.patientData.model.BloodTestsRepository
 import com.example.coagusearch.modules.patientData.model.UserBloodTest
+import com.example.coagusearch.modules.patientData.model.UserBloodTestData
 import com.example.coagusearch.modules.patientData.model.UserBloodTestDataRepository
 import com.example.coagusearch.modules.patientData.model.UserBloodTestRepository
 import com.example.coagusearch.modules.patientData.response.BloodDateResponse
@@ -18,6 +19,8 @@ import com.example.coagusearch.shared.RestException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
 
 
@@ -30,8 +33,8 @@ class PatientDataService @Autowired constructor(
 ) {
 
 
-    fun getTestById(bloodTestId: KeyType): UserBloodTest{
-      return  userBloodTestRepository.findById(bloodTestId).orElseThrow {
+    fun getTestById(bloodTestId: KeyType): UserBloodTest {
+        return userBloodTestRepository.findById(bloodTestId).orElseThrow {
             RestException(
                     "Exception.notFound",
                     HttpStatus.NOT_FOUND,
@@ -43,8 +46,9 @@ class PatientDataService @Autowired constructor(
 
     fun getUsersBloodTests(user: User,
                            language: Language): UserBloodTestsResponse {
+        val now = LocalDateTime.now(ZoneId.of("Turkey")).toInstant(ZoneId.of("Europe/Istanbul").getRules().getOffset(Instant.now()))
         return UserBloodTestsResponse(
-                userTestList = userBloodTestRepository.findAllByUser(user).map {
+                userTestList = userBloodTestRepository.findAllByUserAndTestedAtLessThanEqual(user,now).map {
                     val date = it.testedAt.atZone(ZoneId.of("Europe/Istanbul"))
                     UserBloodTestHistoryResponse(
                             id = it.id!!,
@@ -59,7 +63,9 @@ class PatientDataService @Autowired constructor(
     }
 
     fun getPatientLastAnalysis(patient: User): UserBloodTestHistoryResponse? {
-        val bloodTest = userBloodTestRepository.findFirstByUserOrderByTestedAtDesc(patient) ?: return null
+        val now = LocalDateTime.now(ZoneId.of("Turkey")).toInstant(ZoneId.of("Europe/Istanbul").getRules().getOffset(Instant.now()))
+        val bloodTest = userBloodTestRepository
+                .findFirstByUserAndTestedAtLessThanEqualOrderByTestedAtDesc(patient,now) ?: return null
         val date = bloodTest.testedAt.atZone(ZoneId.of("Europe/Istanbul"))
         return UserBloodTestHistoryResponse(
                 id = bloodTest.id!!,
@@ -110,7 +116,8 @@ class PatientDataService @Autowired constructor(
     }
 
     fun getLastUsersBloodTestsDataById(patient: User): UserBloodTestDataResponse? {
-        val bloodTest = userBloodTestRepository.findFirstByUserOrderByTestedAtDesc(patient) ?: return null
+        val now = LocalDateTime.now(ZoneId.of("Turkey")).toInstant(ZoneId.of("Europe/Istanbul").getRules().getOffset(Instant.now()))
+        val bloodTest = userBloodTestRepository.findFirstByUserAndTestedAtLessThanEqualOrderByTestedAtDesc(patient,now) ?: return null
         val userBloodTestData = userBloodTestDataRepository
                 .findByUserBloodTest(bloodTest).groupBy { it.bloodTest.testName }
         return UserBloodTestDataResponse(
@@ -136,6 +143,28 @@ class PatientDataService @Autowired constructor(
                 },
                 ordersOfData = bloodService.getOrdersOfData(bloodTest)
         )
+    }
+
+    fun addRandomPatientData(patient: User, addedTime: Instant) {
+        val bloodTest = userBloodTestRepository.findAll().shuffled().first()
+        val userBloodTestData = userBloodTestDataRepository
+                .findByUserBloodTest(bloodTest)
+
+        val bloodData: UserBloodTest = userBloodTestRepository.save(
+                UserBloodTest(
+                        testedAt = addedTime,
+                        user = patient
+                )
+        )
+        userBloodTestData.map {
+            userBloodTestDataRepository.save(
+                    UserBloodTestData(
+                            userBloodTest = bloodData,
+                            value = it.value,
+                            bloodTest = it.bloodTest
+                    )
+            )
+        }
     }
 
 

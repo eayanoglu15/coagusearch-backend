@@ -67,16 +67,17 @@ create table blood_order
 (
     patient_id     bigint not null,
     doctor_id  bigint not null,
-    blood_type varchar(255) ,
-    rh_type varchar(255) ,
-    product_type varchar(255) ,
-    quantity DOUBLE PRECISION ,
-    diagnosis varchar(255) ,
-    kind varchar(255) ,
-    bloodTest bigint ,
-    additional_note varchar(4096) ,
+    blood_type varchar(255),
+    rh_type varchar(255),
+    product_type varchar(255),
+    quantity DOUBLE PRECISION,
+    diagnosis varchar(255),
+    kind varchar(255),
+    bloodTest bigint,
+    additional_note varchar(4096),
     unit  varchar(255) not null,
-    id      bigint NOT NULL primary key ,
+    is_ready boolean not null default false,
+    id      bigint NOT NULL primary key,
     version timestamp without time zone
 );
 ALTER TABLE public.blood_order ALTER COLUMN doctor_id SET NOT NULL;

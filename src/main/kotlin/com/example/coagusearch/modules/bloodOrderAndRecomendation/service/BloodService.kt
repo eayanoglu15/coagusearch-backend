@@ -9,6 +9,7 @@ import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.BloodO
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.OrderForUserDataRequest
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.BloodStatusResponse
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.DoctorBloodOrderResponse
+import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.MedicalBloodOrderResponse
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.UserBloodOrderResponse
 import com.example.coagusearch.modules.patientData.model.UserBloodTest
 import com.example.coagusearch.modules.patientData.model.UserBloodTestRepository
@@ -17,6 +18,7 @@ import com.example.coagusearch.modules.users.model.User
 import com.example.coagusearch.modules.users.model.UserBloodType
 import com.example.coagusearch.modules.users.model.UserBodyInfo
 import com.example.coagusearch.modules.users.model.UserBodyInfoRepository
+import com.example.coagusearch.modules.users.model.UserDoctorMedicalRelationshipRepository
 import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationshipRepository
 import com.example.coagusearch.modules.users.model.UserRepository
 import com.example.coagusearch.modules.users.model.UserRhType
@@ -32,7 +34,8 @@ class BloodService @Autowired constructor(
         private val userRepository: UserRepository,
         private val userBodyInfoRepository: UserBodyInfoRepository,
         private val userBloodTestRepository: UserBloodTestRepository,
-        private val doctorPatientRelationshipRepository: UserDoctorPatientRelationshipRepository
+        private val doctorPatientRelationshipRepository: UserDoctorPatientRelationshipRepository,
+        private val doctorMedicalRelationshipRepository: UserDoctorMedicalRelationshipRepository
 ) {
     fun handleOrder(doctor: User,
                     language: Language,
@@ -71,9 +74,11 @@ class BloodService @Autowired constructor(
                     productType = if (it.productType != null) it.productType.toString() else null,
                     quantity = it.quantity,
                     additionalNote = if (it.note != null) it.note.toString() else null,
-                    bloodTestId = it.bloodTest?.id!!,
+                    bloodTestId = it.bloodTest?.id,
                     kind = if (it.kind != null) it.kind.toString() else null,
-                    unit = if (it.unit != null) it.unit else null
+                    unit = if (it.unit != null) it.unit else null,
+                    isReady = it.isReady,
+                    bloodOrderId = it.id!!
             )
         }
     }
@@ -96,7 +101,9 @@ class BloodService @Autowired constructor(
                     patientSurname = bodyInfo?.surname,
                     bloodTestId = it.bloodTest?.id,
                     kind = if (it.kind != null) it.kind.toString() else null,
-                    unit = if (it.unit != null) it.unit else null
+                    unit = if (it.unit != null) it.unit else null,
+                    isReady = it.isReady,
+                    bloodOrderId = it.id!!
 
             )
         }
@@ -112,7 +119,7 @@ class BloodService @Autowired constructor(
                     orderForUserDataRequest.bloodTestId
             )
         }
-        val bodyInfo: UserBodyInfo? =  userBodyInfoRepository.findFirstByUserOrderByIdDesc(bloodTest.user)
+        val bodyInfo: UserBodyInfo? = userBodyInfoRepository.findFirstByUserOrderByIdDesc(bloodTest.user)
 
         var doctor = doctorPatientRelationshipRepository.findByPatient(bloodTest.user)
         if (doctor != null)
@@ -145,12 +152,55 @@ class BloodService @Autowired constructor(
                     additionalNote = if (it.note != null) it.note.toString() else null,
                     patientName = bodyInfo?.name,
                     patientSurname = bodyInfo?.surname,
-                    bloodTestId = it.bloodTest?.id!!,
+                    bloodTestId = it.bloodTest?.id,
                     kind = if (it.kind != null) it.kind.toString() else null,
-                    unit = if (it.unit != null) it.unit else null
+                    unit = if (it.unit != null) it.unit else null,
+                    isReady = it.isReady,
+                    bloodOrderId = it.id!!
 
             )
         }
     }
+
+
+    fun getMedicalOrders(medical: User,language : Language): MedicalBloodOrderResponse {
+        val doctor = doctorMedicalRelationshipRepository.findByMedical(medical)?.doctor
+                ?: throw RestException("Auth.invalidUser", HttpStatus.BAD_REQUEST)
+        val orderList = getDoctorsPreviousOrders(doctor,language)
+        return  MedicalBloodOrderResponse(
+                todoOrderList = orderList.filter { !it.isReady },
+                waitingOrderList = orderList.filter { it.isReady }
+
+        )
+    }
+
+
+    fun addDoneTheOrder(orderId:Long){
+        var order = bloodOrderRepository.findById(orderId).orElseThrow {
+            RestException(
+                    "Exception.notFound",
+                    HttpStatus.NOT_FOUND,
+                    "Blood Order",
+                    orderId
+            )
+        }
+        bloodOrderRepository.deleteById(orderId)
+        bloodOrderRepository.save(
+                BloodOrder(
+                        doctor = order.doctor,
+                        patient = order.patient,
+                        bloodType = order.bloodType,
+                        rhType = order.rhType,
+                        quantity = order.quantity,
+                        note = order.note,
+                        productType = order.productType,
+                        kind =order.kind,
+                        unit = order.unit,
+                        isReady = true
+                )
+        )
+
+    }
+
 
 }

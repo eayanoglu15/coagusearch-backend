@@ -28,7 +28,7 @@ data class EmergencyPatientDetail(
         val userName: String,
         val userSurname: String,
         val arrivalHour: PatientAppointmentTimeResponse,
-        val isUserAtAmbulance: Boolean = Random.nextBoolean(),
-        val isDataReady: Boolean = if (isUserAtAmbulance) Random.nextBoolean() else false
+        val isUserAtAmbulance: Boolean,
+        val isDataReady: Boolean
 
 )

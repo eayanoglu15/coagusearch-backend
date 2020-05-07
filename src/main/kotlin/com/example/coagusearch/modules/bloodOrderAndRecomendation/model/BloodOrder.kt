@@ -74,6 +74,9 @@ data class BloodOrder(
         @field:Column(name = "additional_note")
         var note: String? = null,
 
+        @field:Column(name = "is_ready")
+        var isReady: Boolean = false,
+
         override var id: KeyType? = null,
         override var version: LocalDateTime? = null
 ) : DbEntity() {

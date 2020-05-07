@@ -1,14 +1,16 @@
 package com.example.coagusearch.modules.patientData.model
 
-import com.example.coagusearch.modules.base.model.KeyType
 import com.example.coagusearch.modules.users.model.User
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import java.util.*
+import java.time.Instant
 
 @Repository
 interface UserBloodTestRepository : JpaRepository<UserBloodTest, Long> {
-    fun findAllByUser(user: User): List<UserBloodTest>
-    fun findFirstByUserOrderByTestedAtDesc(user:User): UserBloodTest?
+    fun findAllByUserAndTestedAtLessThanEqual(user: User,testedAt:Instant): List<UserBloodTest>
+    fun findFirstByUserAndTestedAtLessThanEqualOrderByTestedAtDesc(user:User, testedAt: Instant): UserBloodTest?
+
+
 
 }
