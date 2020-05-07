@@ -13,7 +13,6 @@ import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.Medic
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.UserBloodOrderResponse
 import com.example.coagusearch.modules.patientData.model.UserBloodTest
 import com.example.coagusearch.modules.patientData.model.UserBloodTestRepository
-import com.example.coagusearch.modules.patientData.service.PatientDataService
 import com.example.coagusearch.modules.users.model.User
 import com.example.coagusearch.modules.users.model.UserBloodType
 import com.example.coagusearch.modules.users.model.UserBodyInfo
@@ -22,7 +21,6 @@ import com.example.coagusearch.modules.users.model.UserDoctorMedicalRelationship
 import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationshipRepository
 import com.example.coagusearch.modules.users.model.UserRepository
 import com.example.coagusearch.modules.users.model.UserRhType
-import com.example.coagusearch.modules.users.service.UserService
 import com.example.coagusearch.shared.RestException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -169,7 +167,7 @@ class BloodService @Autowired constructor(
         val orderList = getDoctorsPreviousOrders(doctor,language)
         return  MedicalBloodOrderResponse(
                 todoOrderList = orderList.filter { !it.isReady },
-                waitingOrderList = orderList.filter { it.isReady }
+                doneOrderList = orderList.filter { it.isReady }
 
         )
     }
