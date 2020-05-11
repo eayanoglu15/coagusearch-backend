@@ -318,7 +318,7 @@ class UserService @Autowired constructor(
     fun getPatientDetailScreen(user: User, patientId: Long, language: Language): PatientDetailScreen {
         val patient: User = getUserById(patientId)
         val doctor: User = userDoctorPatientRelationshipRepository.findByPatient(patient)!!.doctor
-        if (doctor.id == user.id) {
+        //if (doctor.id == user.id) {
             return PatientDetailScreen(
                     patientResponse = getMyUserResponse(patient),
                     userAppointmentResponse = appointmentDataMapService.getByUser(patient, language),
@@ -327,6 +327,7 @@ class UserService @Autowired constructor(
                     previousBloodOrders = bloodService.getPreviousOrdersByPatient(patient, language)
                             .filter{it.kind.equals("Blood")}
             )
+            /*
         } else {
             throw RestException(
                     "You do not have permission to reach this resource",
@@ -335,6 +336,8 @@ class UserService @Autowired constructor(
                     user.id!!
             )
         }
+
+          */
     }
 
     fun getUserByIdentityNumber(userIdentityNumber: String): User?  {
