@@ -93,7 +93,8 @@ class UserController @Autowired constructor(
             @CurrentUser userPrincipal: UserPrincipal,
             locale: Locale
     ): ResponseEntity<PatientMainScreen> {
-        return userService.getPatientMainScreen(userPrincipal.user).asOkResponse()
+        val language = locale.toLanguage()
+        return userService.getPatientMainScreen(userPrincipal.user,language).asOkResponse()
     }
 
     @GetMapping("/getDoctorMainScreen")

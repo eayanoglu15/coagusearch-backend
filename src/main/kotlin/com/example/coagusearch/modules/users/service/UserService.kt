@@ -8,7 +8,9 @@ import com.example.coagusearch.modules.appointment.service.AppointmentDataMapSer
 import com.example.coagusearch.modules.appointment.service.toEpochSecond
 import com.example.coagusearch.modules.base.model.Language
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.service.BloodService
-import com.example.coagusearch.modules.patientData.response.PatientDataResponse
+import com.example.coagusearch.modules.notification.model.Notification
+import com.example.coagusearch.modules.notification.model.NotificationRepository
+import com.example.coagusearch.modules.notification.response.NotificationResponse
 import com.example.coagusearch.modules.patientData.service.PatientDataService
 import com.example.coagusearch.modules.regularMedication.service.DrugService
 import com.example.coagusearch.modules.users.model.UserBloodType
@@ -31,6 +33,8 @@ import com.example.coagusearch.modules.users.response.PatientGeneralInfoResponse
 import com.example.coagusearch.modules.users.response.PatientMainScreen
 import com.example.coagusearch.modules.users.response.TodayPatientDetail
 import com.example.coagusearch.modules.users.response.UserResponse
+import com.example.coagusearch.shared.MultiLanguageRepository
+import com.example.coagusearch.shared.MultiLanguageString
 import com.example.coagusearch.shared.RestException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -39,7 +43,7 @@ import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.ZoneOffset
+import java.util.*
 
 @Service
 class UserService @Autowired constructor(
@@ -52,7 +56,9 @@ class UserService @Autowired constructor(
         private val drugService: DrugService,
         private val bloodService: BloodService,
         private val patientDataService: PatientDataService,
-        private val userEmergencyInfoRepository: UserEmergencyInfoRepository
+        private val userEmergencyInfoRepository: UserEmergencyInfoRepository,
+        private val notificationRepository: NotificationRepository,
+        private val multiLanguageRepository: MultiLanguageRepository
 ) {
     fun getUserById(id: Long): User =
             userRepository.findById(id).orElseThrow {
@@ -236,7 +242,7 @@ class UserService @Autowired constructor(
 
     }
 
-    fun getPatientMainScreen(user: User): PatientMainScreen {
+    fun getPatientMainScreen(user: User, language : Language): PatientMainScreen {
         val now = LocalDateTime.now(ZoneId.of("Turkey")).toEpochSecond()
         var bodyInfo = userBodyInfoRepository.findFirstByUserOrderByIdDesc(user)
         var nextAppointment = doctorAppointmentsRepository.findAllByPatient(user).firstOrNull {
@@ -256,7 +262,12 @@ class UserService @Autowired constructor(
                             minute = nextAppointment.minute,
                             year = nextAppointment.year,
                             hour = nextAppointment.hour
-                    ) else null
+                    ) else null,
+                patientNotifications = notificationRepository.findAllByUserAndAddedAtLessThanEqual(user).map {
+                    NotificationResponse(
+                            notificationString = it.notificationString.stringByLanguage(language)
+                    )
+                }
         )
 
     }
@@ -338,15 +349,61 @@ class UserService @Autowired constructor(
                 UserEmergencyInfo(
                         doctor= doctor,
                         patient = patient,
-                        dataReadyTime = nowInstant.plusSeconds(60*5),
-                        hospitalReachTime = nowInstant.plusSeconds(60*20)
+                        dataReadyTime = nowInstant.plusSeconds(60*bloodDataTimeDelay),
+                        hospitalReachTime = nowInstant.plusSeconds(60*hospitalReachTimeDelay)
                 )
         )
-        patientDataService.addRandomPatientData(patient,nowInstant.plusSeconds(60*5))
+        patientDataService.addRandomPatientData(patient,nowInstant.plusSeconds(60*bloodDataTimeDelay))
+        addHospital(doctor,patient,nowInstant.plusSeconds(60*hospitalReachTimeDelay))
+        addBloodData(doctor,patient,nowInstant.plusSeconds(60*bloodDataTimeDelay))
         return true
     }
+    fun addBloodData(doctor: User, patient: User,  addedAt: Instant) {
+        val patientBodyInfo = getBodyInfoByUser(patient)
+        val patientName = patientBodyInfo?.name
+        val patientSurname = patientBodyInfo?.surname
+
+        val multiLanguageString = multiLanguageRepository.save(MultiLanguageString(
+                key = UUID.randomUUID().toString(),
+                tr_string = "Hastanız ${patientName} ${patientSurname}'ın kan verisi hazır",
+                en_string = "Blood data of patient ${patientName} ${patientSurname} is ready"
+
+        ))
+        notificationRepository.save(
+                Notification(
+                        user = doctor,
+                        notificationString = multiLanguageString,
+                        addedAt = addedAt
+                )
+
+        )
+    }
+
+    fun addHospital(doctor: User, patient: User,  addedAt: Instant) {
+        val patientBodyInfo = getBodyInfoByUser(patient)
+        val patientName = patientBodyInfo?.name
+        val patientSurname = patientBodyInfo?.surname
+
+        val multiLanguageString = multiLanguageRepository.save(MultiLanguageString(
+                key = UUID.randomUUID().toString(),
+                tr_string = "Hastanız ${patientName} ${patientSurname}'ın kan verisi hazır",
+                en_string = "Blood data of patient ${patientName} ${patientSurname} is ready"
+
+        ))
+        notificationRepository.save(
+                Notification(
+                        user = doctor,
+                        notificationString = multiLanguageString,
+                        addedAt = addedAt
+                )
+
+        )
+    }
+
 
     companion object {
         val logger = LoggerFactory.getLogger(UserService::class.java)
+        val bloodDataTimeDelay = 5L
+        val hospitalReachTimeDelay =20L
     }
 }
