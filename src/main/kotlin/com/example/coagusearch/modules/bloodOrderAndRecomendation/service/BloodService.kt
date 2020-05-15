@@ -111,7 +111,6 @@ class BloodService @Autowired constructor(
                                 UserBloodType.valueOf(bloodOrderRequest.bloodType).toString() + " Rh " +
                                 UserRhType.valueOf(bloodOrderRequest.rhType).toString(),
                         quantity = bloodOrderRequest.unit,
-                        units = bloodOrderRequest.unit.toInt(),
                         note = bloodOrderRequest.additionalNote,
                         kind = OrderKind.Blood,
                         unit = "Unit",
@@ -182,7 +181,7 @@ class BloodService @Autowired constructor(
                     req_date = it.date,
                     req_time = it.time,
                     blood_type_name = it.bloodName,
-                    units = it.units,
+                    units = it.quantity.toInt(),
                     requester_name = it.doctorName,
                     req_status = it.req_status
             )
@@ -241,7 +240,6 @@ class BloodService @Autowired constructor(
                             rhType = bodyInfo?.rhType,
                             productType = UserBloodOrderType.valueOf(orderForUserDataRequest.product),
                             quantity = orderForUserDataRequest.quantity,
-                            units = orderForUserDataRequest.quantity.toInt(),
                             unit = orderForUserDataRequest.unit,
                             kind = OrderKind.valueOf(orderForUserDataRequest.kind),
                             bloodTest = bloodTest
@@ -305,7 +303,6 @@ class BloodService @Autowired constructor(
                         bloodType = order.bloodType,
                         rhType = order.rhType,
                         quantity = order.quantity,
-                        units = order.unit.toInt(),
                         note = order.note,
                         productType = order.productType,
                         kind = order.kind,

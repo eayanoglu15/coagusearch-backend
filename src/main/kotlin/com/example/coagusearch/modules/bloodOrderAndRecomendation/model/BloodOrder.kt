@@ -66,8 +66,6 @@ data class BloodOrder(
 
         var quantity: Double,
 
-        var units: Int,
-
         var unit: String,
 
         @field:Column(name = "diagnosis")
