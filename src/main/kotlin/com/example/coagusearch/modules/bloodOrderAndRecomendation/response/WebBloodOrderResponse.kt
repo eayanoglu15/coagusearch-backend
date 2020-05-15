@@ -8,7 +8,7 @@ data class WebBloodOrderResponse (
         val blood_type_name: String? = null,
         val units: Int? = null,
         val requester_name: String? = null,
-        val isConfirmed: String? = null
+        val req_status: String? = null
 )
 
 

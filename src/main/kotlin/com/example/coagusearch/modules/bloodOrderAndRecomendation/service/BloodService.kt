@@ -80,26 +80,30 @@ class BloodService @Autowired constructor(
         else null
         var result = "Confirmed"
         // TODO: Handle PlateletConcentrate
-        val bloodType = bloodOrderRequest.productType.decapitalize() + " " + bloodOrderRequest.bloodType +
-                bloodOrderRequest.rhType.substring(0, 2).decapitalize()
-        val bloodbank = bloodBankRepository.findByKey(bloodType) ?: return BloodStatusResponse("Denied")
-        if (bloodOrderRequest.unit.toInt() <= bloodbank.value) {
-            bloodBankRepository.deleteByKey(bloodbank.key)
+        var myproducttype = bloodOrderRequest.productType.decapitalize()
+        myproducttype = if(myproducttype.equals("plateletconcentrate")) "pc" else "ffp"
+        val bloodType = myproducttype + "_" + bloodOrderRequest.bloodType +
+                bloodOrderRequest.rhType.substring(0, 3).decapitalize()
+        val bloodbank = bloodBankRepository.findByKey(bloodType) ?: return BloodStatusResponse(bloodType)
+        result = if (bloodOrderRequest.unit.toInt() <= bloodbank.value) {
+          //  bloodBankRepository.deleteByKey("ffp_ABpos")
+            bloodBankRepository.deleteById(bloodbank.id)
             bloodBankRepository.save(
                     BloodBank(
-                           key= bloodbank.key,
+                            key= bloodbank.key,
                             value = bloodbank.value - bloodOrderRequest.unit.toInt()
                     )
             )
-            result = "Confirmed"
+            "Confirmed"
         } else {
-            result = "Denied"
+            "Denied"
         }
+        val req_doctor = userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor)
         bloodOrderRepository.save(
                 BloodOrder(
                         doctor = doctor,
-                        doctorName = "Dr. " + userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor)!!.name + " " +
-                                userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor)!!.surname,
+                        doctorName = "Dr. " + req_doctor!!.name + " " +
+                                req_doctor!!.surname,
                         bloodType = UserBloodType.valueOf(bloodOrderRequest.bloodType),
                         rhType = UserRhType.valueOf(bloodOrderRequest.rhType),
                         productType = UserBloodOrderType.valueOf(bloodOrderRequest.productType),
@@ -113,7 +117,7 @@ class BloodService @Autowired constructor(
                         unit = "Unit",
                         date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")).toString(),
                         time = LocalTime.now(),
-                        status = result
+                        req_status = result!!
 
                 )
         )
@@ -173,15 +177,16 @@ class BloodService @Autowired constructor(
     fun getAllPreviousOrders(): List<WebBloodOrderResponse> {
 
         return bloodOrderRepository.findAll().map {
+            print(it.req_status)
             WebBloodOrderResponse(
                     req_date = it.date,
                     req_time = it.time,
                     blood_type_name = it.bloodName,
                     units = it.units,
                     requester_name = it.doctorName,
-                    isConfirmed = it.status
-
+                    req_status = it.req_status
             )
+
         }
     }
 

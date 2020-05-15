@@ -55,7 +55,7 @@ class BloodOrderController @Autowired constructor(
     }
 
     @GetMapping("/bloodreq")
-    @ApiOperation(value = "Order blood", response = BloodStatusResponse::class)
+    @ApiOperation(value = "Order blood", response = WebBloodOrderResponse::class)
     fun getAllPreviousOrder(
     ): ResponseEntity<List<WebBloodOrderResponse>> {
         return bloodService.getAllPreviousOrders().asOkResponse()

@@ -90,7 +90,7 @@ data class BloodOrder(
         var time: LocalTime? = null,
 
         @field:Column(name = "req_status")
-        var status: String? = null,
+        var req_status: String? = null,
 
         @field:Column(name = "additional_note")
         var note: String? = null,

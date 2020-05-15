@@ -42,6 +42,7 @@ class WebSecurityConfig @Autowired constructor(
                         "/auth/sign-in",
                         "/auth/sign-up",
                         "/auth/tempSignIn",
+                        "/blood/resetBloodbank",
                         "/auth/refresh"
                 ).permitAll()
                 .antMatchers("/swagger-ui.html/**").permitAll()
@@ -49,6 +50,8 @@ class WebSecurityConfig @Autowired constructor(
                         "/",
                         "/favicon.ico",
                         "/v2/api-docs",
+                        "/blood/bloodbank",
+                        "/blood/bloodreq",
                         "/configuration/ui",
                         "/swagger-resources",
                         "/configuration/security",
