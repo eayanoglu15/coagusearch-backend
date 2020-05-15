@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 
 interface BloodBankRepository : JpaRepository<BloodBank, Long> {
+    fun findByKey(key: String) : BloodBank?
+    fun deleteByKey(key: String)
 }

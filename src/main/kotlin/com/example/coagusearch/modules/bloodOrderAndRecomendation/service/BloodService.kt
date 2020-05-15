@@ -16,6 +16,7 @@ import com.example.coagusearch.modules.users.model.UserDoctorPatientRelationship
 import com.example.coagusearch.modules.users.model.UserRepository
 import com.example.coagusearch.modules.users.model.UserRhType
 import com.example.coagusearch.shared.RestException
+import com.example.coagusearch.shared.asList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -36,48 +37,35 @@ class BloodService @Autowired constructor(
 ) {
 
 
-
-
-    fun resetBloodbank() : WebBloodBankResponse {
+    fun resetBloodbank(): WebBloodBankResponse {
         bloodBankRepository.deleteAll()
-        bloodBankRepository.save(
-                BloodBank(
-                        ffp_0pos = 1000,
-                        ffp_0neg = 1000,
-                        ffp_Apos = 1000,
-                        ffp_Aneg = 1000,
-                        ffp_Bpos = 1000,
-                        ffp_Bneg = 1000,
-                        ffp_ABpos = 1000,
-                        ffp_ABneg = 1000,
-                        pc_0pos = 1000,
-                        pc_0neg = 1000,
-                        pc_Apos = 1000,
-                        pc_Aneg = 1000,
-                        pc_Bpos = 1000,
-                        pc_Bneg = 1000,
-                        pc_ABpos = 1000,
-                        pc_ABneg = 1000
-                )
-        )
-        bloodBankRepository.findAll()[0].bloodbankInitilize()
+        BloodBank.keyList.map {
+            bloodBankRepository.save(
+                    BloodBank(
+                            key = it,
+                            value = 1000
+                    )
+            )
+
+        }
+        val allBloodBank = bloodBankRepository.findAll()
         return WebBloodBankResponse(
-                ffp_0pos = 1000,
-                ffp_0neg = 1000,
-                ffp_Apos = 1000,
-                ffp_Aneg = 1000,
-                ffp_Bpos = 1000,
-                ffp_Bneg = 1000,
-                ffp_ABpos = 1000,
-                ffp_ABneg = 1000,
-                pc_0pos = 1000,
-                pc_0neg = 1000,
-                pc_Apos = 1000,
-                pc_Aneg = 1000,
-                pc_Bpos = 1000,
-                pc_Bneg = 1000,
-                pc_ABpos = 1000,
-                pc_ABneg = 1000
+                ffp_0pos = allBloodBank.find{it.key =="ffp_0pos" }?.value ?: 990,
+                ffp_0neg = allBloodBank.find{it.key =="ffp_0neg" }?.value ?: 990,
+                ffp_Apos = allBloodBank.find{it.key =="ffp_Apos" }?.value ?: 990,
+                ffp_Aneg = allBloodBank.find{it.key =="ffp_Aneg" }?.value ?: 990,
+                ffp_Bpos = allBloodBank.find{it.key =="ffp_Bpos" }?.value ?: 990,
+                ffp_Bneg = allBloodBank.find{it.key =="ffp_Bneg" }?.value ?: 990,
+                ffp_ABpos = allBloodBank.find{it.key =="ffp_ABpos" }?.value ?: 990,
+                ffp_ABneg = allBloodBank.find{it.key =="ffp_ABneg" }?.value ?: 990,
+                pc_0pos = allBloodBank.find{it.key =="pc_0pos" }?.value ?: 990,
+                pc_0neg = allBloodBank.find{it.key =="pc_0neg" }?.value ?: 990,
+                pc_Apos = allBloodBank.find{it.key =="pc_Apos" }?.value ?: 990,
+                pc_Aneg = allBloodBank.find{it.key =="pc_Aneg" }?.value ?: 990,
+                pc_Bpos = allBloodBank.find{it.key =="pc_Bpos" }?.value ?: 990,
+                pc_Bneg = allBloodBank.find{it.key =="pc_Bneg" }?.value ?: 990,
+                pc_ABpos = allBloodBank.find{it.key =="pc_ABpos" }?.value ?: 990,
+                pc_ABneg = allBloodBank.find{it.key =="pc_ABneg" }?.value ?: 990
         )
     }
 
@@ -85,54 +73,38 @@ class BloodService @Autowired constructor(
                     language: Language,
                     bloodOrderRequest: BloodOrderRequest
     ): BloodStatusResponse {
-        val bloodType = bloodOrderRequest.productType.decapitalize() + " "+ bloodOrderRequest.bloodType +
-                bloodOrderRequest.rhType.substring(0,2).decapitalize()
-        val bloodbank = bloodBankRepository.findAll()[0].bloodbankStorage
-        var result = "Confirmed"
         val patient = if (bloodOrderRequest.patientId != null)
             userRepository.findById(bloodOrderRequest.patientId).orElseThrow {
                 RestException("Auth.invalidUser", HttpStatus.BAD_REQUEST)
             }
-
         else null
-        if(bloodOrderRequest.unit.toInt() <= bloodbank.get(bloodType)!!){
-            bloodbank.put(bloodType, bloodbank.get(bloodType)!! - bloodOrderRequest.unit.toInt())
-            bloodBankRepository.deleteAll()
+        var result = "Confirmed"
+        // TODO: Handle PlateletConcentrate
+        val bloodType = bloodOrderRequest.productType.decapitalize() + " " + bloodOrderRequest.bloodType +
+                bloodOrderRequest.rhType.substring(0, 2).decapitalize()
+        val bloodbank = bloodBankRepository.findByKey(bloodType) ?: return BloodStatusResponse("Denied")
+        if (bloodOrderRequest.unit.toInt() <= bloodbank.value) {
+            bloodBankRepository.deleteByKey(bloodbank.key)
             bloodBankRepository.save(
                     BloodBank(
-                            ffp_0pos = bloodbank.get("ffp_0pos")!!,
-                            ffp_0neg = bloodbank.get("ffp_0neg")!!,
-                            ffp_Apos = bloodbank.get("ffp_Apos")!!,
-                            ffp_Aneg = bloodbank.get("ffp_Aneg")!!,
-                            ffp_Bpos = bloodbank.get("ffp_Bpos")!!,
-                            ffp_Bneg = bloodbank.get("ffp_Bneg")!!,
-                            ffp_ABpos = bloodbank.get("ffp_ABpos")!!,
-                            ffp_ABneg = bloodbank.get("ffp_ABneg")!!,
-                            pc_0pos = bloodbank.get("pc_0pos")!!,
-                            pc_0neg = bloodbank.get("pc_0neg")!!,
-                            pc_Apos = bloodbank.get("pc_Apos")!!,
-                            pc_Aneg = bloodbank.get("pc_Aneg")!!,
-                            pc_Bpos = bloodbank.get("pc_Bpos")!!,
-                            pc_Bneg = bloodbank.get("pc_Bneg")!!,
-                            pc_ABpos = bloodbank.get("pc_ABpos")!!,
-                            pc_ABneg = bloodbank.get("pc_ABneg")!!
+                           key= bloodbank.key,
+                            value = bloodbank.value - bloodOrderRequest.unit.toInt()
                     )
             )
             result = "Confirmed"
-        }
-        else{
+        } else {
             result = "Denied"
         }
         bloodOrderRepository.save(
                 BloodOrder(
                         doctor = doctor,
-                        doctorName = "Dr. "+userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor)!!.name+ " " +
+                        doctorName = "Dr. " + userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor)!!.name + " " +
                                 userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor)!!.surname,
                         bloodType = UserBloodType.valueOf(bloodOrderRequest.bloodType),
                         rhType = UserRhType.valueOf(bloodOrderRequest.rhType),
                         productType = UserBloodOrderType.valueOf(bloodOrderRequest.productType),
-                        bloodName = UserBloodOrderType.valueOf(bloodOrderRequest.productType).toString()+ " "+
-                            UserBloodType.valueOf(bloodOrderRequest.bloodType).toString() + " Rh "+
+                        bloodName = UserBloodOrderType.valueOf(bloodOrderRequest.productType).toString() + " " +
+                                UserBloodType.valueOf(bloodOrderRequest.bloodType).toString() + " Rh " +
                                 UserRhType.valueOf(bloodOrderRequest.rhType).toString(),
                         quantity = bloodOrderRequest.unit,
                         units = bloodOrderRequest.unit.toInt(),
@@ -149,6 +121,12 @@ class BloodService @Autowired constructor(
                 result = result
         )
     }
+
+
+
+
+
+
 
     fun getPreviousOrdersByPatient(patient: User,
                                    language: Language
@@ -170,32 +148,29 @@ class BloodService @Autowired constructor(
     }
 
 
-
-    fun getBloodbank() : List<WebBloodBankResponse> {
-        return bloodBankRepository.findAll().map {
-            val bloodbank = bloodBankRepository.findAll().get(0).bloodbankStorage
-            WebBloodBankResponse(
-                    ffp_0pos = bloodbank.get("ffp_0pos")!!,
-                    ffp_0neg = bloodbank.get("ffp_0neg")!!,
-                    ffp_Apos = bloodbank.get("ffp_Apos")!!,
-                    ffp_Aneg = bloodbank.get("ffp_Aneg")!!,
-                    ffp_Bpos = bloodbank.get("ffp_Bpos")!!,
-                    ffp_Bneg = bloodbank.get("ffp_Bneg")!!,
-                    ffp_ABpos = bloodbank.get("ffp_ABpos")!!,
-                    ffp_ABneg = bloodbank.get("ffp_ABneg")!!,
-                    pc_0pos = bloodbank.get("pc_0pos")!!,
-                    pc_0neg = bloodbank.get("pc_0neg")!!,
-                    pc_Apos = bloodbank.get("pc_Apos")!!,
-                    pc_Aneg = bloodbank.get("pc_Aneg")!!,
-                    pc_Bpos = bloodbank.get("pc_Bpos")!!,
-                    pc_Bneg = bloodbank.get("pc_Bneg")!!,
-                    pc_ABpos = bloodbank.get("pc_ABpos")!!,
-                    pc_ABneg = bloodbank.get("pc_ABneg")!!
-            )
-        }
+    fun getBloodbank(): List<WebBloodBankResponse> {
+        val allBloodBank = bloodBankRepository.findAll()
+        return WebBloodBankResponse(
+                ffp_0pos = allBloodBank.find{it.key =="ffp_0pos" }?.value ?: 990,
+                ffp_0neg = allBloodBank.find{it.key =="ffp_0neg" }?.value ?: 990,
+                ffp_Apos = allBloodBank.find{it.key =="ffp_Apos" }?.value ?: 990,
+                ffp_Aneg = allBloodBank.find{it.key =="ffp_Aneg" }?.value ?: 990,
+                ffp_Bpos = allBloodBank.find{it.key =="ffp_Bpos" }?.value ?: 990,
+                ffp_Bneg = allBloodBank.find{it.key =="ffp_Bneg" }?.value ?: 990,
+                ffp_ABpos = allBloodBank.find{it.key =="ffp_ABpos" }?.value ?: 990,
+                ffp_ABneg = allBloodBank.find{it.key =="ffp_ABneg" }?.value ?: 990,
+                pc_0pos = allBloodBank.find{it.key =="pc_0pos" }?.value ?: 990,
+                pc_0neg = allBloodBank.find{it.key =="pc_0neg" }?.value ?: 990,
+                pc_Apos = allBloodBank.find{it.key =="pc_Apos" }?.value ?: 990,
+                pc_Aneg = allBloodBank.find{it.key =="pc_Aneg" }?.value ?: 990,
+                pc_Bpos = allBloodBank.find{it.key =="pc_Bpos" }?.value ?: 990,
+                pc_Bneg = allBloodBank.find{it.key =="pc_Bneg" }?.value ?: 990,
+                pc_ABpos = allBloodBank.find{it.key =="pc_ABpos" }?.value ?: 990,
+                pc_ABneg = allBloodBank.find{it.key =="pc_ABneg" }?.value ?: 990
+        ).asList()
     }
 
-    fun getAllPreviousOrders() : List<WebBloodOrderResponse> {
+    fun getAllPreviousOrders(): List<WebBloodOrderResponse> {
 
         return bloodOrderRepository.findAll().map {
             WebBloodOrderResponse(
@@ -254,7 +229,7 @@ class BloodService @Autowired constructor(
             bloodOrderRepository.save(
                     BloodOrder(
                             doctor = doctor.doctor,
-                            doctorName = userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor.doctor)!!.name+ " " +
+                            doctorName = userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor.doctor)!!.name + " " +
                                     userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor.doctor)!!.surname,
                             patient = bloodTest.user,
                             bloodType = bodyInfo?.bloodType,
@@ -294,11 +269,11 @@ class BloodService @Autowired constructor(
     }
 
 
-    fun getMedicalOrders(medical: User,language : Language): MedicalBloodOrderResponse {
+    fun getMedicalOrders(medical: User, language: Language): MedicalBloodOrderResponse {
         val doctor = doctorMedicalRelationshipRepository.findByMedical(medical)?.doctor
                 ?: throw RestException("Auth.invalidUser", HttpStatus.BAD_REQUEST)
-        val orderList = getDoctorsPreviousOrders(doctor,language)
-        return  MedicalBloodOrderResponse(
+        val orderList = getDoctorsPreviousOrders(doctor, language)
+        return MedicalBloodOrderResponse(
                 todoOrderList = orderList.filter { !it.isReady },
                 doneOrderList = orderList.filter { it.isReady }
 
@@ -306,7 +281,7 @@ class BloodService @Autowired constructor(
     }
 
 
-    fun addDoneTheOrder(orderId:Long){
+    fun addDoneTheOrder(orderId: Long) {
         var order = bloodOrderRepository.findById(orderId).orElseThrow {
             RestException(
                     "Exception.notFound",
@@ -319,7 +294,7 @@ class BloodService @Autowired constructor(
         bloodOrderRepository.save(
                 BloodOrder(
                         doctor = order.doctor,
-                        doctorName = userBodyInfoRepository.findFirstByUserOrderByIdDesc(order.doctor)!!.name+ " " +
+                        doctorName = userBodyInfoRepository.findFirstByUserOrderByIdDesc(order.doctor)!!.name + " " +
                                 userBodyInfoRepository.findFirstByUserOrderByIdDesc(order.doctor)!!.surname,
                         patient = order.patient,
                         bloodType = order.bloodType,
@@ -328,7 +303,7 @@ class BloodService @Autowired constructor(
                         units = order.unit.toInt(),
                         note = order.note,
                         productType = order.productType,
-                        kind =order.kind,
+                        kind = order.kind,
                         unit = order.unit,
                         isReady = true
                 )
