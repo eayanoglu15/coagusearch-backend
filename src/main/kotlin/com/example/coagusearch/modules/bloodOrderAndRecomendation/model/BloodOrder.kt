@@ -8,6 +8,7 @@ import com.example.coagusearch.modules.users.model.UserBloodType
 import com.example.coagusearch.modules.users.model.UserRhType
 import io.swagger.annotations.ApiModel
 import java.time.LocalDateTime
+import java.time.LocalTime
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.EnumType
@@ -34,6 +35,9 @@ data class BloodOrder(
         )
         var doctor: User,
 
+        @field:Column(name = "requester_name")
+        var doctorName: String? = null,
+
 
         @field:ManyToOne(fetch = FetchType.LAZY)
         @field:JoinColumn(
@@ -50,11 +54,19 @@ data class BloodOrder(
         @field:Column(name = "rh_type")
         var rhType: UserRhType? = null,
 
+        @field:Column(name = "blood_type_name")
+        var bloodName: String? = null,
+
+        @field:Column(name = "blood_type_name_abbr")
+        var bloodName_abbr: String? = null,
+
         @field:Enumerated(EnumType.STRING)
         @field:Column(name = "product_type")
         var productType: UserBloodOrderType? = null,
 
         var quantity: Double,
+
+        var units: Int,
 
         var unit: String,
 
@@ -70,6 +82,15 @@ data class BloodOrder(
                 name = "blood_test"
         )
         var bloodTest: UserBloodTest? = null,
+
+        @field:Column(name = "req_date")
+        var date: String? = null,
+
+        @field:Column(name = "req_time")
+        var time: LocalTime? = null,
+
+        @field:Column(name = "req_status")
+        var status: String? = null,
 
         @field:Column(name = "additional_note")
         var note: String? = null,

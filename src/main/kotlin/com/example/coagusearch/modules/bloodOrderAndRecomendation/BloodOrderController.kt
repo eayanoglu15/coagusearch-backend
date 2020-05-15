@@ -5,9 +5,7 @@ import com.example.coagusearch.modules.base.model.toLanguage
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.BloodOrderRequest
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.OrderForUserDataRequest
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.request.SetReadyBloodOrderRequest
-import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.BloodStatusResponse
-import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.DoctorBloodOrderResponse
-import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.MedicalBloodOrderResponse
+import com.example.coagusearch.modules.bloodOrderAndRecomendation.response.*
 import com.example.coagusearch.modules.bloodOrderAndRecomendation.service.BloodService
 import com.example.coagusearch.security.CurrentUser
 import com.example.coagusearch.security.UserPrincipal
@@ -54,6 +52,27 @@ class BloodOrderController @Autowired constructor(
     ): ResponseEntity<List<DoctorBloodOrderResponse>> {
         val user = userPrincipal.user
         return bloodService.getDoctorsPreviousOrders(user, locale.toLanguage()).asOkResponse()
+    }
+
+    @GetMapping("/bloodreq")
+    @ApiOperation(value = "Order blood", response = BloodStatusResponse::class)
+    fun getAllPreviousOrder(
+    ): ResponseEntity<List<WebBloodOrderResponse>> {
+        return bloodService.getAllPreviousOrders().asOkResponse()
+    }
+
+    @GetMapping("/bloodbank")
+    @ApiOperation(value = "Get Bloodbank", response = WebBloodBankResponse::class)
+    fun getBloodBank(
+    ): ResponseEntity<List<WebBloodBankResponse>> {
+        return bloodService.getBloodbank().asOkResponse()
+    }
+
+    @PostMapping("/resetBloodbank")
+    @ApiOperation(value = "Reset Bloodbank", response = WebBloodBankResponse::class)
+    fun resetBloodbank(
+    ): ResponseEntity<WebBloodBankResponse> {
+        return bloodService.resetBloodbank().asOkResponse()
     }
 
 

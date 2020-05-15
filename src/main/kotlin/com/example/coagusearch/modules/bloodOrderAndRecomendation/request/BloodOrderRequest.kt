@@ -1,5 +1,8 @@
 package com.example.coagusearch.modules.bloodOrderAndRecomendation.request
 
+import java.time.LocalDateTime
+import java.util.*
+
 data class BloodOrderRequest (
         val bloodType: String,
         val rhType: String,
