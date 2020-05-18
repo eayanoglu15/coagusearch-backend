@@ -50,16 +50,16 @@ class BloodService @Autowired constructor(
         }
         val allBloodBank = bloodBankRepository.findAll()
         return WebBloodBankResponse(
-                ffp_0pos = allBloodBank.find{it.key =="ffp_0pos" }?.value ?: 990,
-                ffp_0neg = allBloodBank.find{it.key =="ffp_0neg" }?.value ?: 990,
+                ffp_0pos = allBloodBank.find{it.key =="ffp_Opos" }?.value ?: 990,
+                ffp_0neg = allBloodBank.find{it.key =="ffp_Oneg" }?.value ?: 990,
                 ffp_Apos = allBloodBank.find{it.key =="ffp_Apos" }?.value ?: 990,
                 ffp_Aneg = allBloodBank.find{it.key =="ffp_Aneg" }?.value ?: 990,
                 ffp_Bpos = allBloodBank.find{it.key =="ffp_Bpos" }?.value ?: 990,
                 ffp_Bneg = allBloodBank.find{it.key =="ffp_Bneg" }?.value ?: 990,
                 ffp_ABpos = allBloodBank.find{it.key =="ffp_ABpos" }?.value ?: 990,
                 ffp_ABneg = allBloodBank.find{it.key =="ffp_ABneg" }?.value ?: 990,
-                pc_0pos = allBloodBank.find{it.key =="pc_0pos" }?.value ?: 990,
-                pc_0neg = allBloodBank.find{it.key =="pc_0neg" }?.value ?: 990,
+                pc_0pos = allBloodBank.find{it.key =="pc_Opos" }?.value ?: 990,
+                pc_0neg = allBloodBank.find{it.key =="pc_Oneg" }?.value ?: 990,
                 pc_Apos = allBloodBank.find{it.key =="pc_Apos" }?.value ?: 990,
                 pc_Aneg = allBloodBank.find{it.key =="pc_Aneg" }?.value ?: 990,
                 pc_Bpos = allBloodBank.find{it.key =="pc_Bpos" }?.value ?: 990,
@@ -79,14 +79,12 @@ class BloodService @Autowired constructor(
             }
         else null
         var result = "Confirmed"
-        // TODO: Handle PlateletConcentrate
         var myproducttype = bloodOrderRequest.productType.decapitalize()
         myproducttype = if(myproducttype.equals("plateletconcentrate")) "pc" else "ffp"
-        val bloodType = myproducttype + "_" + bloodOrderRequest.bloodType +
+        val bloodType1 = myproducttype + "_" + bloodOrderRequest.bloodType +
                 bloodOrderRequest.rhType.substring(0, 3).decapitalize()
-        val bloodbank = bloodBankRepository.findByKey(bloodType) ?: return BloodStatusResponse(bloodType)
+        val bloodbank = bloodBankRepository.findByKey(bloodType1) ?: return BloodStatusResponse(bloodType1)
         result = if (bloodOrderRequest.unit.toInt() <= bloodbank.value) {
-          //  bloodBankRepository.deleteByKey("ffp_ABpos")
             bloodBankRepository.deleteById(bloodbank.id)
             bloodBankRepository.save(
                     BloodBank(
@@ -96,7 +94,7 @@ class BloodService @Autowired constructor(
             )
             "Confirmed"
         } else {
-            "Denied"
+            "Confirmed"
         }
         val req_doctor = userBodyInfoRepository.findFirstByUserOrderByIdDesc(doctor)
         bloodOrderRepository.save(
@@ -155,16 +153,16 @@ class BloodService @Autowired constructor(
     fun getBloodbank(): List<WebBloodBankResponse> {
         val allBloodBank = bloodBankRepository.findAll()
         return WebBloodBankResponse(
-                ffp_0pos = allBloodBank.find{it.key =="ffp_0pos" }?.value ?: 990,
-                ffp_0neg = allBloodBank.find{it.key =="ffp_0neg" }?.value ?: 990,
+                ffp_0pos = allBloodBank.find{it.key =="ffp_Opos" }?.value ?: 990,
+                ffp_0neg = allBloodBank.find{it.key =="ffp_Oneg" }?.value ?: 990,
                 ffp_Apos = allBloodBank.find{it.key =="ffp_Apos" }?.value ?: 990,
                 ffp_Aneg = allBloodBank.find{it.key =="ffp_Aneg" }?.value ?: 990,
                 ffp_Bpos = allBloodBank.find{it.key =="ffp_Bpos" }?.value ?: 990,
                 ffp_Bneg = allBloodBank.find{it.key =="ffp_Bneg" }?.value ?: 990,
                 ffp_ABpos = allBloodBank.find{it.key =="ffp_ABpos" }?.value ?: 990,
                 ffp_ABneg = allBloodBank.find{it.key =="ffp_ABneg" }?.value ?: 990,
-                pc_0pos = allBloodBank.find{it.key =="pc_0pos" }?.value ?: 990,
-                pc_0neg = allBloodBank.find{it.key =="pc_0neg" }?.value ?: 990,
+                pc_0pos = allBloodBank.find{it.key =="pc_Opos" }?.value ?: 990,
+                pc_0neg = allBloodBank.find{it.key =="pc_Oneg" }?.value ?: 990,
                 pc_Apos = allBloodBank.find{it.key =="pc_Apos" }?.value ?: 990,
                 pc_Aneg = allBloodBank.find{it.key =="pc_Aneg" }?.value ?: 990,
                 pc_Bpos = allBloodBank.find{it.key =="pc_Bpos" }?.value ?: 990,
@@ -175,13 +173,18 @@ class BloodService @Autowired constructor(
     }
 
     fun getAllPreviousOrders(): List<WebBloodOrderResponse> {
-
+        var correctedBloodName = "not_specified"
         return bloodOrderRepository.findAll().map {
-            print(it.req_status)
+
+            if (it.bloodName.equals("ffp_Opos")) correctedBloodName = "ffp_0pos"
+            else if (it.bloodName.equals("ffp_Oneg")) correctedBloodName = "ffp_0neg"
+            else if (it.bloodName.equals("pc_Opos")) correctedBloodName = "pc_0pos"
+            else if (it.bloodName.equals("pc_Oneg")) correctedBloodName = "pc_0neg"
+
             WebBloodOrderResponse(
                     req_date = it.date,
                     req_time = it.time,
-                    blood_type_name = it.bloodName,
+                    blood_type_name = correctedBloodName,
                     units = it.quantity.toInt(),
                     requester_name = it.doctorName,
                     req_status = it.req_status
@@ -229,6 +232,23 @@ class BloodService @Autowired constructor(
         }
         val bodyInfo: UserBodyInfo? = userBodyInfoRepository.findFirstByUserOrderByIdDesc(bloodTest.user)
 
+        var myproducttype = UserBloodOrderType.valueOf(orderForUserDataRequest.product).toString().decapitalize()
+        myproducttype = if(myproducttype.equals("plateletconcentrate")) "pc" else "ffp"
+        val bloodType1 = myproducttype + "_" + bodyInfo?.bloodType +
+                bodyInfo?.rhType.toString().substring(0, 3).decapitalize()
+        val bloodbank = bloodBankRepository.findByKey(bloodType1)
+
+        if (orderForUserDataRequest.unit.toInt() <= bloodbank!!.value) {
+            bloodBankRepository.deleteById(bloodbank!!.id)
+            bloodBankRepository.save(
+                    BloodBank(
+
+                            key= bloodbank!!.key,
+                            value = bloodbank!!.value - orderForUserDataRequest.unit.toInt()
+                    )
+            )
+        }
+
         var doctor = doctorPatientRelationshipRepository.findByPatient(bloodTest.user)
         if (doctor != null)
             bloodOrderRepository.save(
@@ -240,9 +260,14 @@ class BloodService @Autowired constructor(
                             bloodType = bodyInfo?.bloodType,
                             rhType = bodyInfo?.rhType,
                             productType = UserBloodOrderType.valueOf(orderForUserDataRequest.product),
+                            bloodName = UserBloodOrderType.valueOf(orderForUserDataRequest.product).toString() + " " +
+                                    bodyInfo?.bloodType.toString() + " Rh " +
+                                    bodyInfo?.rhType.toString(),
                             quantity = orderForUserDataRequest.quantity,
                             unit = orderForUserDataRequest.unit,
                             kind = OrderKind.valueOf(orderForUserDataRequest.kind),
+                            date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")).toString(),
+                            time = LocalTime.now(),
                             bloodTest = bloodTest
                     )
             )

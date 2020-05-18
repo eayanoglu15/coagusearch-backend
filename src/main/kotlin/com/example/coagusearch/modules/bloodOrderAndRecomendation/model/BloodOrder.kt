@@ -57,8 +57,6 @@ data class BloodOrder(
         @field:Column(name = "blood_type_name")
         var bloodName: String? = null,
 
-        @field:Column(name = "blood_type_name_abbr")
-        var bloodName_abbr: String? = null,
 
         @field:Enumerated(EnumType.STRING)
         @field:Column(name = "product_type")

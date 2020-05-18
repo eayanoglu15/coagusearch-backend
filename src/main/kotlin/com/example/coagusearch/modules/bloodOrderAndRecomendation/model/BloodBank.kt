@@ -36,8 +36,8 @@ data class BloodBank(
     override fun equalityProperties(): Collection<KProperty1<out DbEntity, Any?>> =
             listOf(BloodOrder::id)
     companion object {
-        var keyList = listOf("ffp_0pos", "ffp_0neg", "ffp_Apos", "ffp_Aneg",
-                "ffp_Bpos", "ffp_Bneg", "ffp_ABpos", "ffp_ABneg", "pc_0pos", "pc_0neg", "pc_Apos",
+        var keyList = listOf("ffp_Opos", "ffp_Oneg", "ffp_Apos", "ffp_Aneg",
+                "ffp_Bpos", "ffp_Bneg", "ffp_ABpos", "ffp_ABneg", "pc_Opos", "pc_Oneg", "pc_Apos",
                 "pc_Aneg", "pc_Bpos", "pc_Bneg", "pc_ABpos", "pc_ABneg")
     }
 }
