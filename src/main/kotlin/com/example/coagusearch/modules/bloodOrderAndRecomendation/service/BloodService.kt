@@ -104,6 +104,7 @@ class BloodService @Autowired constructor(
                         doctor = doctor,
                         doctorName = "Dr. " + req_doctor!!.name + " " +
                                 req_doctor!!.surname,
+                        patient = patient,
                         bloodType = UserBloodType.valueOf(bloodOrderRequest.bloodType),
                         rhType = UserRhType.valueOf(bloodOrderRequest.rhType),
                         productType = UserBloodOrderType.valueOf(bloodOrderRequest.productType),
