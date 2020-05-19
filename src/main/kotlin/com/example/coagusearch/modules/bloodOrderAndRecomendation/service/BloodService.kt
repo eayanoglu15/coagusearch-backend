@@ -238,13 +238,13 @@ class BloodService @Autowired constructor(
                 bodyInfo?.rhType.toString().substring(0, 3).decapitalize()
         val bloodbank = bloodBankRepository.findByKey(bloodType1)
 
-        if (orderForUserDataRequest.unit.toInt() <= bloodbank!!.value) {
+        if (orderForUserDataRequest.quantity.toInt() <= bloodbank!!.value) {
             bloodBankRepository.deleteById(bloodbank!!.id)
             bloodBankRepository.save(
                     BloodBank(
 
                             key= bloodbank!!.key,
-                            value = bloodbank!!.value - orderForUserDataRequest.unit.toInt()
+                            value = bloodbank!!.value - orderForUserDataRequest.quantity.toInt()
                     )
             )
         }
