@@ -173,18 +173,12 @@ class BloodService @Autowired constructor(
     }
 
     fun getAllPreviousOrders(): List<WebBloodOrderResponse> {
-        var correctedBloodName = "not_specified"
+
         return bloodOrderRepository.findAll().map {
-
-            if (it.bloodName.equals("ffp_Opos")) correctedBloodName = "ffp_0pos"
-            else if (it.bloodName.equals("ffp_Oneg")) correctedBloodName = "ffp_0neg"
-            else if (it.bloodName.equals("pc_Opos")) correctedBloodName = "pc_0pos"
-            else if (it.bloodName.equals("pc_Oneg")) correctedBloodName = "pc_0neg"
-
             WebBloodOrderResponse(
                     req_date = it.date,
                     req_time = it.time,
-                    blood_type_name = correctedBloodName,
+                    blood_type_name = it.bloodName,
                     units = it.quantity.toInt(),
                     requester_name = it.doctorName,
                     req_status = it.req_status
